@@ -1,0 +1,11 @@
+{
+  "name": "cryptolens",
+  "version": "1.0.0",
+  "description": "CryptoLens portfolio tracker",
+  "scripts": {
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
