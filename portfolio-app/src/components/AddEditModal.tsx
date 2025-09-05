@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from './ui/dialog'
 import type { PortfolioEntry, TransactionType } from '@/types/portfolio'
-import { usePortfolioStore } from '@/stores/portfolioStore'
+import { usePortfolioStore } from '@/stores/apiPortfolioStore'
 import { CRYPTO_ASSETS, searchAssets, type CryptoAsset } from '@/data/cryptoAssets'
 
 interface AddEditModalProps {

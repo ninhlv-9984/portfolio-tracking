@@ -12,7 +12,6 @@ import { PriceSourceSettings } from './components/PriceSourceSettings'
 import { AssetAllocation } from './components/AssetAllocation'
 import { AllocationBreakdown } from './components/AllocationBreakdown'
 import { PositionHistory } from './components/PositionHistory'
-import { HistoryMigration } from './components/HistoryMigration'
 import { usePortfolio } from './hooks/usePortfolio'
 import type { PortfolioEntry } from './types/portfolio'
 
@@ -46,7 +45,6 @@ function PortfolioApp() {
 
   return (
     <div className="min-h-screen bg-background">
-      <HistoryMigration />
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

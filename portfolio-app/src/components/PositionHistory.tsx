@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { format } from 'date-fns'
 import { 
   Plus, 
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Input } from './ui/input'
 import { formatCurrency } from '@/lib/utils'
-import { useHistoryStore } from '@/stores/historyStore'
+import { useHistoryStore } from '@/stores/apiHistoryStore'
 import { CRYPTO_ASSETS } from '@/data/cryptoAssets'
 import { HistoryStats } from './HistoryStats'
 import { Button } from './ui/button'
@@ -26,6 +26,11 @@ interface PositionHistoryProps {
 
 export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
   const history = useHistoryStore((state) => state.history)
+  const loadHistory = useHistoryStore((state) => state.loadHistory)
+  
+  useEffect(() => {
+    loadHistory()
+  }, [])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterAction, setFilterAction] = useState<HistoryActionType | 'all'>('all')
   const [filterAsset, setFilterAsset] = useState<string>('all')

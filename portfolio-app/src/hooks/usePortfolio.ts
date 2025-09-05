@@ -1,14 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
-import { usePortfolioStore } from '../stores/portfolioStore'
+import { usePortfolioStore } from '../stores/apiPortfolioStore'
 import { priceManager } from '../services/priceManager'
 import type { PositionWithMetrics, PortfolioMetrics } from '../types/portfolio'
 import { groupPositionsByAsset, convertGroupedToMetrics } from '../utils/portfolioUtils'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export const usePortfolio = (grouped: boolean = true) => {
   const entries = usePortfolioStore((state) => state.entries)
+  const loadEntries = usePortfolioStore((state) => state.loadEntries)
   const [dataSource, setDataSource] = useState<'api' | 'scraper'>('api')
   const [sourceMessage, setSourceMessage] = useState<string>('')
+  
+  // Load entries from database on mount
+  useEffect(() => {
+    loadEntries()
+  }, [])
   
   const { data: priceData, isLoading, error, refetch } = useQuery({
     queryKey: ['prices', entries.map(e => e.asset)],

@@ -1,6 +1,6 @@
 import { TrendingUp, Activity, Calendar, Package } from 'lucide-react'
-import { useHistoryStore } from '@/stores/historyStore'
-import { usePortfolioStore } from '@/stores/portfolioStore'
+import { useHistoryStore } from '@/stores/apiHistoryStore'
+import { usePortfolioStore } from '@/stores/apiPortfolioStore'
 import { format } from 'date-fns'
 
 export function HistoryStats() {

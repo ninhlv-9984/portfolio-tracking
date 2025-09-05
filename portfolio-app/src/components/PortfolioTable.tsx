@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { formatCurrency, formatPercentage } from '@/lib/utils'
 import type { PositionWithMetrics } from '@/types/portfolio'
-import { usePortfolioStore } from '@/stores/portfolioStore'
+import { usePortfolioStore } from '@/stores/apiPortfolioStore'
 
 interface PortfolioTableProps {
   positions: PositionWithMetrics[]
