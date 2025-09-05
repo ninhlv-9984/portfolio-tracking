@@ -16,15 +16,27 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
 
   entries.forEach(entry => {
     const existing = grouped.get(entry.asset)
+    const isSell = entry.type === 'sell'
+    const quantityChange = isSell ? -entry.quantity : entry.quantity
     
     if (existing) {
       // Update existing group
-      const newTotalQuantity = existing.totalQuantity + entry.quantity
-      const newTotalInvestment = existing.totalInvestment + (entry.quantity * entry.buy_price_usd)
+      const newTotalQuantity = existing.totalQuantity + quantityChange
+      
+      // For sells, reduce the investment proportionally
+      // For buys, add to the investment
+      let newTotalInvestment: number
+      if (isSell) {
+        // Reduce investment proportionally based on average price
+        const sellValue = entry.quantity * existing.averageBuyPrice
+        newTotalInvestment = Math.max(0, existing.totalInvestment - sellValue)
+      } else {
+        newTotalInvestment = existing.totalInvestment + (entry.quantity * entry.buy_price_usd)
+      }
       
       existing.totalQuantity = newTotalQuantity
       existing.totalInvestment = newTotalInvestment
-      existing.averageBuyPrice = newTotalInvestment / newTotalQuantity
+      existing.averageBuyPrice = newTotalQuantity > 0 ? newTotalInvestment / newTotalQuantity : 0
       existing.entries.push(entry)
       
       // Update dates
@@ -41,8 +53,8 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
       if (entry.notes) {
         existing.notes.push(entry.notes)
       }
-    } else {
-      // Create new group
+    } else if (!isSell) {
+      // Only create new group for buy transactions
       grouped.set(entry.asset, {
         asset: entry.asset,
         totalQuantity: entry.quantity,
@@ -54,9 +66,11 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
         notes: entry.notes ? [entry.notes] : []
       })
     }
+    // If it's a sell and no existing position, skip it (can't sell what you don't have)
   })
 
-  return Array.from(grouped.values())
+  // Filter out positions with zero or negative quantity
+  return Array.from(grouped.values()).filter(group => group.totalQuantity > 0)
 }
 
 export function convertGroupedToMetrics(

@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog'
-import type { PortfolioEntry } from '@/types/portfolio'
+import type { PortfolioEntry, TransactionType } from '@/types/portfolio'
 import { usePortfolioStore } from '@/stores/portfolioStore'
 import { CRYPTO_ASSETS, searchAssets, type CryptoAsset } from '@/data/cryptoAssets'
 
@@ -29,8 +29,10 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
 
   const [formData, setFormData] = useState({
     asset: '',
+    type: 'buy' as TransactionType,
     quantity: '',
     buy_price_usd: '',
+    destination_asset: 'USDT',
     buy_date: '',
     notes: ''
   })
@@ -49,8 +51,10 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
       setSelectedAsset(asset)
       setFormData({
         asset: entry.asset,
+        type: entry.type || 'buy',
         quantity: entry.quantity.toString(),
         buy_price_usd: entry.buy_price_usd.toString(),
+        destination_asset: entry.destination_asset || 'USDT',
         buy_date: entry.buy_date || '',
         notes: entry.notes || ''
       })
@@ -60,8 +64,10 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
     } else {
       setFormData({
         asset: '',
+        type: 'buy',
         quantity: '',
         buy_price_usd: '',
+        destination_asset: 'USDT',
         buy_date: '',
         notes: ''
       })
@@ -159,8 +165,10 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
 
     const data = {
       asset: formData.asset,
+      type: formData.type,
       quantity: parseFloat(formData.quantity),
       buy_price_usd: parseFloat(formData.buy_price_usd),
+      destination_asset: formData.type === 'sell' ? formData.destination_asset : undefined,
       buy_date: formData.buy_date || undefined,
       notes: formData.notes || undefined
     }
@@ -186,6 +194,28 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Transaction Type</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={formData.type === 'buy' ? 'default' : 'outline'}
+                  onClick={() => setFormData({ ...formData, type: 'buy' })}
+                  className="w-full"
+                >
+                  Buy
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.type === 'sell' ? 'default' : 'outline'}
+                  onClick={() => setFormData({ ...formData, type: 'sell' })}
+                  className="w-full"
+                >
+                  Sell
+                </Button>
+              </div>
+            </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="asset">Asset</Label>
               <div className="relative">
@@ -259,6 +289,28 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
               )}
             </div>
 
+            {formData.type === 'sell' && (
+              <div className="grid gap-2">
+                <Label>Receive Currency</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['USDT', 'USDC', 'BUSD'].map((currency) => (
+                    <Button
+                      key={currency}
+                      type="button"
+                      variant={formData.destination_asset === currency ? 'default' : 'outline'}
+                      onClick={() => setFormData({ ...formData, destination_asset: currency })}
+                      className="w-full"
+                    >
+                      {currency}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  The stablecoin you'll receive from this sale
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="quantity">Quantity</Label>
@@ -277,7 +329,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="buy_price_usd">Buy Price (USD)</Label>
+                <Label htmlFor="buy_price_usd">{formData.type === 'buy' ? 'Buy' : 'Sell'} Price (USD)</Label>
                 <Input
                   id="buy_price_usd"
                   type="number"
@@ -294,11 +346,11 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="buy_date">Buy Date (Optional)</Label>
+              <Label htmlFor="buy_date">{formData.type === 'buy' ? 'Buy' : 'Sell'} Date (Optional)</Label>
               <DatePicker 
                 date={selectedDate} 
                 onDateChange={handleDateChange}
-                placeholder="Select purchase date"
+                placeholder="Select transaction date"
               />
             </div>
 

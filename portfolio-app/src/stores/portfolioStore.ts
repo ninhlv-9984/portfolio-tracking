@@ -23,11 +23,36 @@ export const usePortfolioStore = create<PortfolioStore>()(
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
-        set((state) => ({
-          entries: [...state.entries, newEntry]
-        }))
-        // Track in history
-        useHistoryStore.getState().addHistoryEntry('add', newEntry)
+        
+        // If it's a sell transaction, also create a buy transaction for the destination currency
+        if (newEntry.type === 'sell' && newEntry.destination_asset) {
+          const receiveAmount = newEntry.quantity * newEntry.buy_price_usd
+          const destinationEntry: PortfolioEntry = {
+            asset: newEntry.destination_asset,
+            type: 'buy',
+            quantity: receiveAmount,
+            buy_price_usd: 1, // Stablecoins are pegged to $1
+            buy_date: newEntry.buy_date,
+            notes: `Received from selling ${newEntry.quantity} ${newEntry.asset}`,
+            id: crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+          
+          set((state) => ({
+            entries: [...state.entries, newEntry, destinationEntry]
+          }))
+          
+          // Track both in history
+          useHistoryStore.getState().addHistoryEntry('add', newEntry)
+          useHistoryStore.getState().addHistoryEntry('add', destinationEntry)
+        } else {
+          set((state) => ({
+            entries: [...state.entries, newEntry]
+          }))
+          // Track in history
+          useHistoryStore.getState().addHistoryEntry('add', newEntry)
+        }
       },
       
       updateEntry: (id, updates) => {

@@ -6,6 +6,8 @@ export interface HistoryEntry {
   action: HistoryActionType
   entryId: string
   asset: string
+  type?: 'buy' | 'sell'
+  destination_asset?: string
   quantity: number
   buy_price_usd: number
   buy_date?: string

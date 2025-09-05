@@ -191,6 +191,15 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">{entry.asset}</span>
+                              {entry.type && (
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  entry.type === 'buy' 
+                                    ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                                    : 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                                }`}>
+                                  {entry.type === 'buy' ? 'Buy' : 'Sell'}
+                                </span>
+                              )}
                               <span className={`text-xs px-2 py-0.5 rounded-full border ${getActionColor(entry.action)}`}>
                                 {getActionLabel(entry.action)}
                               </span>
@@ -209,8 +218,10 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                               const entryToEdit: PortfolioEntry = {
                                 id: entry.entryId || entry.id,
                                 asset: entry.asset,
+                                type: entry.type || 'buy',
                                 quantity: entry.quantity,
                                 buy_price_usd: entry.buy_price_usd,
+                                destination_asset: entry.destination_asset,
                                 buy_date: entry.buy_date,
                                 notes: entry.notes,
                                 created_at: entry.timestamp,
@@ -267,9 +278,16 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                         </div>
 
                         <div>
-                          <span className="text-muted-foreground">Total Investment:</span>
+                          <span className="text-muted-foreground">
+                            {entry.type === 'sell' ? 'Total Received:' : 'Total Investment:'}
+                          </span>
                           <div className="font-medium">
                             {formatCurrency(entry.quantity * entry.buy_price_usd)}
+                            {entry.type === 'sell' && entry.destination_asset && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                in {entry.destination_asset}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -1,8 +1,12 @@
+export type TransactionType = 'buy' | 'sell'
+
 export interface PortfolioEntry {
   id: string
   asset: string
+  type: TransactionType
   quantity: number
   buy_price_usd: number
+  destination_asset?: string // For sell transactions
   buy_date?: string
   notes?: string
   created_at: string
