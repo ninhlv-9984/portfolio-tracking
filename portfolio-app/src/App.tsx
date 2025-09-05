@@ -7,6 +7,7 @@ import { AddEditModal } from './components/AddEditModal'
 import { TotalsBar } from './components/TotalsBar'
 import { ThemeToggle } from './components/ThemeToggle'
 import { EmptyState } from './components/EmptyState'
+import { PriceSourceSettings } from './components/PriceSourceSettings'
 import { usePortfolio } from './hooks/usePortfolio'
 import type { PortfolioEntry } from './types/portfolio'
 
@@ -58,6 +59,7 @@ function PortfolioApp() {
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
+              <PriceSourceSettings />
               <ThemeToggle />
               {positions.length > 0 && (
                 <Button onClick={handleAdd}>

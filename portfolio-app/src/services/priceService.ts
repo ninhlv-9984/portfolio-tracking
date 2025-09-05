@@ -1,4 +1,5 @@
 import type { AssetPrice } from '../types/portfolio'
+import { scraperService } from './scraperService'
 
 export interface PriceService {
   getPrices(symbols: string[]): Promise<Map<string, AssetPrice>>
@@ -29,12 +30,15 @@ const SYMBOL_TO_ID: Record<string, string> = {
   'NEAR': 'near',
   'APT': 'aptos',
   'ARB': 'arbitrum',
-  'OP': 'optimism'
+  'OP': 'optimism',
+  'USDT': 'tether',
+  'USDC': 'usd-coin'
 }
 
 export class CoinGeckoService implements PriceService {
   private cache = new Map<string, { data: AssetPrice; timestamp: number }>()
-  private cacheTimeout = 15000 // 15 seconds
+  private cacheTimeout = 60000 // 60 seconds cache (increased from 15s)
+  private useScraperFallback = true
 
   async getPrices(symbols: string[]): Promise<Map<string, AssetPrice>> {
     const result = new Map<string, AssetPrice>()
@@ -55,52 +59,66 @@ export class CoinGeckoService implements PriceService {
       return result
     }
 
-    // Map symbols to CoinGecko IDs
+    // Try CoinGecko API first
+    let apiSuccess = false
     const ids = symbolsToFetch
       .map(s => SYMBOL_TO_ID[s.toUpperCase()])
       .filter(Boolean)
     
-    if (ids.length === 0) {
-      return result
+    if (ids.length > 0) {
+      try {
+        const response = await fetch(
+          `${COINGECKO_API}/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`
+        )
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch prices from CoinGecko')
+        }
+
+        const data = await response.json()
+        
+        // Also fetch market data for images and names
+        const marketResponse = await fetch(
+          `${COINGECKO_API}/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`
+        )
+        
+        const marketData: any[] = marketResponse.ok ? await marketResponse.json() : []
+        const marketMap = new Map(marketData.map((item) => [item.id, item]))
+
+        for (const [id, priceData] of Object.entries(data) as any) {
+          const symbol = Object.entries(SYMBOL_TO_ID).find(([_, v]) => v === id)?.[0]
+          if (symbol) {
+            const marketInfo = marketMap.get(id) as any
+            const assetPrice: AssetPrice = {
+              symbol,
+              name: marketInfo?.name || symbol,
+              current_price: priceData.usd,
+              price_change_percentage_24h: priceData.usd_24h_change || 0,
+              last_updated: new Date().toISOString(),
+              image: marketInfo?.image
+            }
+            result.set(symbol, assetPrice)
+            this.cache.set(symbol, { data: assetPrice, timestamp: now })
+          }
+        }
+        apiSuccess = true
+      } catch (error) {
+        console.error('CoinGecko API error:', error)
+        console.log('Falling back to scraper service...')
+      }
     }
 
-    try {
-      const response = await fetch(
-        `${COINGECKO_API}/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`
-      )
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch prices')
+    // If API failed or didn't get all symbols, use scraper as fallback
+    if (!apiSuccess && this.useScraperFallback) {
+      try {
+        const scrapedPrices = await scraperService.getPrices(symbolsToFetch)
+        scrapedPrices.forEach((price, symbol) => {
+          result.set(symbol, price)
+          this.cache.set(symbol, { data: price, timestamp: now })
+        })
+      } catch (scraperError) {
+        console.error('Scraper fallback also failed:', scraperError)
       }
-
-      const data = await response.json()
-      
-      // Also fetch market data for images and names
-      const marketResponse = await fetch(
-        `${COINGECKO_API}/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`
-      )
-      
-      const marketData: any[] = marketResponse.ok ? await marketResponse.json() : []
-      const marketMap = new Map(marketData.map((item) => [item.id, item]))
-
-      for (const [id, priceData] of Object.entries(data) as any) {
-        const symbol = Object.entries(SYMBOL_TO_ID).find(([_, v]) => v === id)?.[0]
-        if (symbol) {
-          const marketInfo = marketMap.get(id) as any
-          const assetPrice: AssetPrice = {
-            symbol,
-            name: marketInfo?.name || symbol,
-            current_price: priceData.usd,
-            price_change_percentage_24h: priceData.usd_24h_change || 0,
-            last_updated: new Date().toISOString(),
-            image: marketInfo?.image
-          }
-          result.set(symbol, assetPrice)
-          this.cache.set(symbol, { data: assetPrice, timestamp: now })
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching prices:', error)
     }
 
     return result

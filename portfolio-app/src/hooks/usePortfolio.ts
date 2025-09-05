@@ -1,21 +1,35 @@
 import { useQuery } from '@tanstack/react-query'
 import { usePortfolioStore } from '../stores/portfolioStore'
-import { priceService } from '../services/priceService'
+import { priceManager } from '../services/priceManager'
 import type { PositionWithMetrics, PortfolioMetrics } from '../types/portfolio'
+import { useState } from 'react'
 
 export const usePortfolio = () => {
   const entries = usePortfolioStore((state) => state.entries)
+  const [dataSource, setDataSource] = useState<'api' | 'scraper'>('api')
+  const [sourceMessage, setSourceMessage] = useState<string>('')
   
-  const { data: prices, isLoading, error, refetch } = useQuery({
+  const { data: priceData, isLoading, error, refetch } = useQuery({
     queryKey: ['prices', entries.map(e => e.asset)],
     queryFn: async () => {
       const symbols = [...new Set(entries.map(e => e.asset))]
-      if (symbols.length === 0) return new Map()
-      return priceService.getPrices(symbols)
+      if (symbols.length === 0) return { prices: new Map(), source: 'api' as const }
+      
+      const result = await priceManager.getPrices(symbols)
+      setDataSource(result.source)
+      if (result.message) {
+        setSourceMessage(result.message)
+        // Clear message after 5 seconds
+        setTimeout(() => setSourceMessage(''), 5000)
+      }
+      return result
     },
-    refetchInterval: 15000, // Refetch every 15 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 15s to avoid rate limits)
+    staleTime: 30000, // Consider data stale after 30 seconds
     enabled: entries.length > 0
   })
+  
+  const prices = priceData?.prices
 
   const positionsWithMetrics: PositionWithMetrics[] = entries.map(entry => {
     const assetPrice = prices?.get(entry.asset)
@@ -72,6 +86,8 @@ export const usePortfolio = () => {
     metrics,
     isLoading,
     error,
-    refetch
+    refetch,
+    dataSource,
+    sourceMessage
   }
 }

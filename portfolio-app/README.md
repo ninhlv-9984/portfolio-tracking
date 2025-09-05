@@ -6,7 +6,12 @@ A modern, responsive cryptocurrency portfolio tracking application built with Re
 
 ### Core Functionality
 - **Portfolio Management**: Add, edit, and delete portfolio entries with fields for asset, quantity, buy price, buy date, and notes
-- **Real-Time Metrics**: Live price updates every 15 seconds from CoinGecko API
+- **Dual Price Sources**: 
+  - Primary: CoinGecko API for accurate data
+  - Fallback: Web scraper using Binance & CoinMarketCap public data (no API key needed)
+  - Automatic switching when rate limits are hit
+- **Smart Caching**: 60-second cache to minimize API calls
+- **Real-Time Metrics**: Live price updates every 60 seconds
 - **P/L Tracking**: Track unrealized profit/loss per position and total portfolio
 - **Sorting & Filtering**: Sort by value, P/L, or asset name, with search functionality
 - **Dark/Light Mode**: Theme toggle with system preference detection
@@ -86,10 +91,24 @@ Currently supports the following cryptocurrencies:
 ## Architecture
 
 ### Price Service
-The app uses an abstracted `PriceService` interface, making it easy to switch price providers. Currently implements CoinGecko with:
-- 15-second cache for API rate limiting
-- Batch price fetching for efficiency
-- Error handling and fallbacks
+The app uses a dual-source price fetching system to avoid rate limits:
+
+#### Primary: CoinGecko API
+- Free tier with rate limits (10-30 calls/min)
+- Provides comprehensive data including images and market info
+- 60-second cache to stay within limits
+
+#### Fallback: Web Scraper
+- Fetches from Binance API (no key required)
+- Secondary source: CoinMarketCap public endpoints
+- Activates automatically when API fails
+- No rate limits for basic ticker data
+
+#### Smart Switching
+- Auto mode (default): Tries API first, falls back to scraper
+- Manual mode: Force use of API or scraper
+- Visual indicators show which source is active
+- Configurable via settings panel
 
 ### State Management
 Portfolio data is managed with Zustand and persisted to localStorage. The store handles:
