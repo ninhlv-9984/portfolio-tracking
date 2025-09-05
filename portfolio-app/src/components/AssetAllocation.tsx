@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { formatCurrency, formatPercentage } from '@/lib/utils'
+import { formatCurrency, formatPercentage, formatCryptoAmount } from '@/lib/utils'
 import type { PositionWithMetrics } from '@/types/portfolio'
 import { CRYPTO_ASSETS } from '@/data/cryptoAssets'
 
@@ -69,7 +69,7 @@ export function AssetAllocation({ positions }: AssetAllocationProps) {
         <div className="bg-background border rounded-lg shadow-lg p-3">
           <p className="font-semibold">{data.name}</p>
           <p className="text-sm text-muted-foreground">
-            Quantity: {data.quantity.toLocaleString()}
+            Quantity: {formatCryptoAmount(data.quantity)}
           </p>
           <p className="text-sm">
             Value: {formatCurrency(data.value)}

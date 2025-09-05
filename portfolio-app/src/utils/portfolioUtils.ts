@@ -17,20 +17,29 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
   entries.forEach(entry => {
     const existing = grouped.get(entry.asset)
     const isSell = entry.type === 'sell'
-    const quantityChange = isSell ? -entry.quantity : entry.quantity
+    const isWithdraw = entry.type === 'withdraw'
+    const isDeposit = entry.type === 'deposit'
+    const isBuy = entry.type === 'buy'
+    
+    // Calculate quantity change based on transaction type
+    const quantityChange = (isSell || isWithdraw) ? -entry.quantity : entry.quantity
     
     if (existing) {
       // Update existing group
       const newTotalQuantity = existing.totalQuantity + quantityChange
       
-      // For sells, reduce the investment proportionally
-      // For buys, add to the investment
+      // Handle investment calculation based on transaction type
       let newTotalInvestment: number
-      if (isSell) {
-        // Reduce investment proportionally based on average price
-        const sellValue = entry.quantity * existing.averageBuyPrice
-        newTotalInvestment = Math.max(0, existing.totalInvestment - sellValue)
+      if (isSell || isWithdraw) {
+        // For sells/withdraws, reduce investment proportionally based on average price
+        const reduceValue = entry.quantity * existing.averageBuyPrice
+        newTotalInvestment = Math.max(0, existing.totalInvestment - reduceValue)
+      } else if (isDeposit) {
+        // For deposits, use provided price or current average
+        const depositPrice = entry.buy_price_usd || existing.averageBuyPrice
+        newTotalInvestment = existing.totalInvestment + (entry.quantity * depositPrice)
       } else {
+        // For buys, add to the investment
         newTotalInvestment = existing.totalInvestment + (entry.quantity * entry.buy_price_usd)
       }
       
@@ -53,20 +62,21 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
       if (entry.notes) {
         existing.notes.push(entry.notes)
       }
-    } else if (!isSell) {
-      // Only create new group for buy transactions
+    } else if (!isSell && !isWithdraw) {
+      // Create new group for buy/deposit transactions
+      const initialPrice = entry.buy_price_usd || 0 // For deposits with no price
       grouped.set(entry.asset, {
         asset: entry.asset,
         totalQuantity: entry.quantity,
-        averageBuyPrice: entry.buy_price_usd,
-        totalInvestment: entry.quantity * entry.buy_price_usd,
+        averageBuyPrice: initialPrice,
+        totalInvestment: entry.quantity * initialPrice,
         entries: [entry],
         earliestBuyDate: entry.buy_date,
         latestBuyDate: entry.buy_date,
         notes: entry.notes ? [entry.notes] : []
       })
     }
-    // If it's a sell and no existing position, skip it (can't sell what you don't have)
+    // If it's a sell/withdraw and no existing position, skip it (can't sell/withdraw what you don't have)
   })
 
   // Filter out positions with zero or negative quantity
@@ -89,6 +99,7 @@ export function convertGroupedToMetrics(
     const syntheticEntry: PortfolioEntry = {
       id: `grouped-${group.asset}`,
       asset: group.asset,
+      type: 'buy', // Default type for grouped display
       quantity: group.totalQuantity,
       buy_price_usd: group.averageBuyPrice,
       buy_date: group.earliestBuyDate,

@@ -31,8 +31,8 @@ export const useHistoryStore = create<ApiHistoryStore>((set, get) => ({
         asset: h.asset,
         type: h.type,
         destination_asset: h.destination_asset,
-        quantity: h.quantity,
-        buy_price_usd: h.price_usd,
+        quantity: parseFloat(h.quantity as any) || 0,
+        buy_price_usd: parseFloat(h.price_usd as any) || 0,
         buy_date: h.transaction_date,
         notes: h.notes
       }))

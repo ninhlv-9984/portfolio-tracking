@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react'
-import { ArrowUpDown, Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react'
+import { ArrowUpDown, TrendingUp, TrendingDown } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { formatCurrency, formatPercentage } from '@/lib/utils'
+import { formatCurrency, formatPercentage, formatCryptoAmount } from '@/lib/utils'
 import type { PositionWithMetrics } from '@/types/portfolio'
-import { usePortfolioStore } from '@/stores/apiPortfolioStore'
 
 interface PortfolioTableProps {
   positions: PositionWithMetrics[]
@@ -17,8 +16,6 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('value')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-  
-  const deleteEntry = usePortfolioStore((state) => state.deleteEntry)
 
   const filteredAndSortedPositions = useMemo(() => {
     let filtered = positions.filter(p => 
@@ -50,12 +47,6 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
     } else {
       setSortKey(key)
       setSortDirection('desc')
-    }
-  }
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this position?')) {
-      deleteEntry(id)
     }
   }
 
@@ -125,7 +116,6 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
                     <ArrowUpDown className="h-4 w-4" />
                   </Button>
                 </th>
-                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -160,7 +150,7 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
                       </div>
                     </td>
                   <td className="p-4 text-right font-mono">
-                    {position.quantity.toLocaleString()}
+                    {formatCryptoAmount(position.quantity)}
                   </td>
                   <td className="p-4 text-right font-mono">
                     {formatCurrency(position.buy_price_usd)}
@@ -198,25 +188,6 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
                       : 'text-red-600 dark:text-red-400'
                   }`}>
                     {position.pnlPercentage >= 0 ? '+' : ''}{formatPercentage(position.pnlPercentage)}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(position)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(position.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </td>
                 </tr>
                 )

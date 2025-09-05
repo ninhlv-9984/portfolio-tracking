@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS history CASCADE;
 DROP TYPE IF EXISTS transaction_type CASCADE;
 
 -- Create enum for transaction type
-CREATE TYPE transaction_type AS ENUM ('buy', 'sell');
+CREATE TYPE transaction_type AS ENUM ('buy', 'sell', 'deposit', 'withdraw');
 
 -- Create transactions table
 CREATE TABLE transactions (

@@ -9,134 +9,140 @@ export const CRYPTO_ASSETS: CryptoAsset[] = [
   {
     symbol: 'BTC',
     name: 'Bitcoin',
-    logo: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
     color: '#f7931a'
   },
   {
     symbol: 'ETH',
     name: 'Ethereum',
-    logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
     color: '#627eea'
   },
   {
     symbol: 'BNB',
     name: 'BNB',
-    logo: 'https://cryptologos.cc/logos/bnb-bnb-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
     color: '#f3ba2f'
   },
   {
     symbol: 'XRP',
     name: 'XRP',
-    logo: 'https://cryptologos.cc/logos/xrp-xrp-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
     color: '#23292f'
   },
   {
     symbol: 'ADA',
     name: 'Cardano',
-    logo: 'https://cryptologos.cc/logos/cardano-ada-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
     color: '#0033ad'
   },
   {
     symbol: 'SOL',
     name: 'Solana',
-    logo: 'https://cryptologos.cc/logos/solana-sol-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
     color: '#00d4aa'
   },
   {
     symbol: 'DOT',
     name: 'Polkadot',
-    logo: 'https://cryptologos.cc/logos/polkadot-new-dot-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
     color: '#e6007a'
   },
   {
     symbol: 'DOGE',
     name: 'Dogecoin',
-    logo: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
     color: '#c2a633'
   },
   {
     symbol: 'AVAX',
     name: 'Avalanche',
-    logo: 'https://cryptologos.cc/logos/avalanche-avax-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
     color: '#e84142'
   },
   {
     symbol: 'LINK',
     name: 'Chainlink',
-    logo: 'https://cryptologos.cc/logos/chainlink-link-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
     color: '#2a5ada'
   },
   {
     symbol: 'MATIC',
     name: 'Polygon',
-    logo: 'https://cryptologos.cc/logos/polygon-matic-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
     color: '#8247e5'
   },
   {
     symbol: 'NEAR',
     name: 'NEAR Protocol',
-    logo: 'https://cryptologos.cc/logos/near-protocol-near-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/10365/small/near.png',
     color: '#000000'
   },
   {
     symbol: 'APT',
     name: 'Aptos',
-    logo: 'https://cryptologos.cc/logos/aptos-apt-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/26455/small/aptos_round.png',
     color: '#000000'
   },
   {
     symbol: 'ARB',
     name: 'Arbitrum',
-    logo: 'https://cryptologos.cc/logos/arbitrum-arb-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg',
     color: '#28a0f0'
   },
   {
     symbol: 'OP',
     name: 'Optimism',
-    logo: 'https://cryptologos.cc/logos/optimism-ethereum-op-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png',
     color: '#ff0420'
   },
   {
     symbol: 'LTC',
     name: 'Litecoin',
-    logo: 'https://cryptologos.cc/logos/litecoin-ltc-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
     color: '#bfbbbb'
   },
   {
     symbol: 'UNI',
     name: 'Uniswap',
-    logo: 'https://cryptologos.cc/logos/uniswap-uni-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/12504/small/uni.jpg',
     color: '#ff007a'
   },
   {
     symbol: 'ATOM',
     name: 'Cosmos',
-    logo: 'https://cryptologos.cc/logos/cosmos-atom-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
     color: '#2e3148'
   },
   {
     symbol: 'FIL',
     name: 'Filecoin',
-    logo: 'https://cryptologos.cc/logos/filecoin-fil-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/12817/small/filecoin.png',
     color: '#0090ff'
   },
   {
     symbol: 'ICP',
     name: 'Internet Computer',
-    logo: 'https://cryptologos.cc/logos/internet-computer-icp-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/14495/small/Internet_Computer_logo.png',
     color: '#3b00b9'
   },
   {
     symbol: 'USDT',
     name: 'Tether',
-    logo: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
     color: '#26a17b'
   },
   {
     symbol: 'USDC',
     name: 'USD Coin',
-    logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+    logo: 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
     color: '#2775ca'
+  },
+  {
+    symbol: 'BUSD',
+    name: 'Binance USD',
+    logo: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png',
+    color: '#f0b90b'
   }
 ]
 

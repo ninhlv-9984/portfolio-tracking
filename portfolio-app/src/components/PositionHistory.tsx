@@ -8,8 +8,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  Search,
-  Pencil
+  Search
 } from 'lucide-react'
 import { Input } from './ui/input'
 import { formatCurrency } from '@/lib/utils'
@@ -19,6 +18,7 @@ import { HistoryStats } from './HistoryStats'
 import { Button } from './ui/button'
 import type { HistoryActionType } from '@/types/history'
 import type { PortfolioEntry } from '@/types/portfolio'
+import { usePortfolioStore } from '@/stores/apiPortfolioStore'
 
 interface PositionHistoryProps {
   onEdit?: (entry: PortfolioEntry) => void
@@ -27,6 +27,7 @@ interface PositionHistoryProps {
 export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
   const history = useHistoryStore((state) => state.history)
   const loadHistory = useHistoryStore((state) => state.loadHistory)
+  const deleteEntry = usePortfolioStore((state) => state.deleteEntry)
   
   useEffect(() => {
     loadHistory()
@@ -215,27 +216,19 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                             </div>
                           </div>
                         </div>
-                        {onEdit && entry.action !== 'delete' && (
+                        {entry.action !== 'delete' && entry.entryId && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                              const entryToEdit: PortfolioEntry = {
-                                id: entry.entryId || entry.id,
-                                asset: entry.asset,
-                                type: entry.type || 'buy',
-                                quantity: entry.quantity,
-                                buy_price_usd: entry.buy_price_usd,
-                                destination_asset: entry.destination_asset,
-                                buy_date: entry.buy_date,
-                                notes: entry.notes,
-                                created_at: entry.timestamp,
-                                updated_at: entry.timestamp
+                            onClick={async () => {
+                              if (window.confirm('Are you sure you want to delete this transaction?')) {
+                                await deleteEntry(entry.entryId)
+                                await loadHistory()
                               }
-                              onEdit(entryToEdit)
                             }}
+                            className="text-destructive hover:text-destructive"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>

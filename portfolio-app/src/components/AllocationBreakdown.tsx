@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercentage } from '@/lib/utils'
+import { formatCurrency, formatPercentage, formatCryptoAmount } from '@/lib/utils'
 import type { PositionWithMetrics } from '@/types/portfolio'
 import { CRYPTO_ASSETS } from '@/data/cryptoAssets'
 import { TrendingUp, TrendingDown } from 'lucide-react'
@@ -42,7 +42,7 @@ export function AllocationBreakdown({ positions }: AllocationBreakdownProps) {
                   )}
                   <span className="font-medium">{position.asset}</span>
                   <span className="text-sm text-muted-foreground">
-                    {position.quantity.toLocaleString()} units
+                    {formatCryptoAmount(position.quantity)} units
                   </span>
                 </div>
                 <div className="text-right">

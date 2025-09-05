@@ -1,4 +1,4 @@
-export type TransactionType = 'buy' | 'sell'
+export type TransactionType = 'buy' | 'sell' | 'deposit' | 'withdraw'
 
 export interface PortfolioEntry {
   id: string
