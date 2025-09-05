@@ -13,12 +13,12 @@ export function EmptyState({ onAddClick }: EmptyStateProps) {
       </div>
       <h2 className="text-2xl font-bold mb-2">Start Tracking Your Portfolio</h2>
       <p className="text-muted-foreground mb-6 max-w-md">
-        Add your first crypto position to begin tracking your portfolio performance
+        Add your first crypto transaction to begin tracking your portfolio performance
         with real-time prices and P/L calculations.
       </p>
       <Button onClick={onAddClick} size="lg">
         <Plus className="h-4 w-4 mr-2" />
-        Add Your First Position
+        Add Your First Transaction
       </Button>
     </div>
   )

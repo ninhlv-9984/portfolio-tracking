@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { usePortfolioStore } from '../stores/portfolioStore'
 import { priceManager } from '../services/priceManager'
 import type { PositionWithMetrics, PortfolioMetrics } from '../types/portfolio'
+import { groupPositionsByAsset, convertGroupedToMetrics } from '../utils/portfolioUtils'
 import { useState } from 'react'
 
-export const usePortfolio = () => {
+export const usePortfolio = (grouped: boolean = true) => {
   const entries = usePortfolioStore((state) => state.entries)
   const [dataSource, setDataSource] = useState<'api' | 'scraper'>('api')
   const [sourceMessage, setSourceMessage] = useState<string>('')
@@ -31,23 +32,26 @@ export const usePortfolio = () => {
   
   const prices = priceData?.prices
 
-  const positionsWithMetrics: PositionWithMetrics[] = entries.map(entry => {
-    const assetPrice = prices?.get(entry.asset)
-    const currentPrice = assetPrice?.current_price || 0
-    const value = entry.quantity * currentPrice
-    const cost = entry.quantity * entry.buy_price_usd
-    const pnl = value - cost
-    const pnlPercentage = cost > 0 ? (pnl / cost) * 100 : 0
+  // Either group positions by asset or keep them separate
+  const positionsWithMetrics: PositionWithMetrics[] = grouped 
+    ? convertGroupedToMetrics(groupPositionsByAsset(entries), prices)
+    : entries.map(entry => {
+        const assetPrice = prices?.get(entry.asset)
+        const currentPrice = assetPrice?.current_price || 0
+        const value = entry.quantity * currentPrice
+        const cost = entry.quantity * entry.buy_price_usd
+        const pnl = value - cost
+        const pnlPercentage = cost > 0 ? (pnl / cost) * 100 : 0
 
-    return {
-      ...entry,
-      currentPrice,
-      value,
-      pnl,
-      pnlPercentage,
-      assetInfo: assetPrice
-    }
-  })
+        return {
+          ...entry,
+          currentPrice,
+          value,
+          pnl,
+          pnlPercentage,
+          assetInfo: assetPrice
+        }
+      })
 
   const metrics: PortfolioMetrics = positionsWithMetrics.reduce(
     (acc, position) => {

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PortfolioEntry } from '../types/portfolio'
+import { useHistoryStore } from './historyStore'
 
 interface PortfolioStore {
   entries: PortfolioEntry[]
@@ -25,22 +26,36 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set((state) => ({
           entries: [...state.entries, newEntry]
         }))
+        // Track in history
+        useHistoryStore.getState().addHistoryEntry('add', newEntry)
       },
       
       updateEntry: (id, updates) => {
-        set((state) => ({
-          entries: state.entries.map((entry) =>
-            entry.id === id
-              ? { ...entry, ...updates, updated_at: new Date().toISOString() }
-              : entry
-          )
-        }))
+        const currentEntry = get().entries.find(e => e.id === id)
+        if (currentEntry) {
+          const updatedEntry = { 
+            ...currentEntry, 
+            ...updates, 
+            updated_at: new Date().toISOString() 
+          }
+          set((state) => ({
+            entries: state.entries.map((entry) =>
+              entry.id === id ? updatedEntry : entry
+            )
+          }))
+          // Don't track updates in history - we treat each as an individual transaction
+        }
       },
       
       deleteEntry: (id) => {
-        set((state) => ({
-          entries: state.entries.filter((entry) => entry.id !== id)
-        }))
+        const entryToDelete = get().entries.find(e => e.id === id)
+        if (entryToDelete) {
+          set((state) => ({
+            entries: state.entries.filter((entry) => entry.id !== id)
+          }))
+          // Track deletion in history
+          useHistoryStore.getState().addHistoryEntry('delete', entryToDelete)
+        }
       },
       
       getEntry: (id) => {

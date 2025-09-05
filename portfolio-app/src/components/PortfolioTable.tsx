@@ -129,27 +129,36 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredAndSortedPositions.map((position) => (
-                <tr key={position.id} className="border-b hover:bg-muted/50 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      {position.assetInfo?.image && (
-                        <img 
-                          src={position.assetInfo.image} 
-                          alt={position.asset}
-                          className="w-8 h-8 rounded-full"
-                        />
-                      )}
-                      <div>
-                        <div className="font-medium">{position.asset}</div>
-                        {position.assetInfo?.name && (
-                          <div className="text-sm text-muted-foreground">
-                            {position.assetInfo.name}
-                          </div>
+              {filteredAndSortedPositions.map((position) => {
+                const groupedEntries = (position as any).groupedEntries
+                const hasMultipleEntries = groupedEntries && groupedEntries.length > 1
+                
+                return (
+                  <tr key={position.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        {position.assetInfo?.image && (
+                          <img 
+                            src={position.assetInfo.image} 
+                            alt={position.asset}
+                            className="w-8 h-8 rounded-full"
+                          />
                         )}
+                        <div>
+                          <div className="font-medium">{position.asset}</div>
+                          {position.assetInfo?.name && (
+                            <div className="text-sm text-muted-foreground">
+                              {position.assetInfo.name}
+                            </div>
+                          )}
+                          {hasMultipleEntries && (
+                            <div className="text-xs text-muted-foreground">
+                              {groupedEntries.length} transactions • Avg price: {formatCurrency(position.buy_price_usd)}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
                   <td className="p-4 text-right font-mono">
                     {position.quantity.toLocaleString()}
                   </td>
@@ -210,7 +219,8 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

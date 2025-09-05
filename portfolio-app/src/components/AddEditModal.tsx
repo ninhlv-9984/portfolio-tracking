@@ -179,9 +179,9 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{entry ? 'Edit Position' : 'Add Position'}</DialogTitle>
+            <DialogTitle>{entry ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
             <DialogDescription>
-              {entry ? 'Update your portfolio position' : 'Add a new position to your portfolio'}
+              {entry ? 'Update your transaction details' : 'Add a new transaction to your portfolio'}
             </DialogDescription>
           </DialogHeader>
 
