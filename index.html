@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>CryptoLens</h1>
+    <button id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+  </header>
+
+  <main>
+    <section id="portfolio-section">
+      <h2>Your Portfolio</h2>
+      <div id="empty-state" class="hidden">No assets yet. Add your first investment below.</div>
+      <table id="portfolio-table" class="hidden">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Qty</th>
+            <th>Buy Price ($)</th>
+            <th>Current Price ($)</th>
+            <th>Value ($)</th>
+            <th>P/L ($)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="portfolio-body"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3"></td>
+            <td>Total</td>
+            <td id="total-value">0</td>
+            <td id="total-pl">0</td>
+            <td id="total-pl-pct">0%</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <section id="form-section">
+      <h2>Add / Edit Asset</h2>
+      <form id="asset-form">
+        <input type="hidden" id="asset-id" />
+        <label>
+          Asset Symbol*
+          <input id="asset" required placeholder="e.g., BTC" />
+          <span class="error" id="asset-error"></span>
+        </label>
+        <label>
+          Quantity*
+          <input id="quantity" type="number" step="any" required />
+          <span class="error" id="quantity-error"></span>
+        </label>
+        <label>
+          Buy Price USD*
+          <input id="buy-price" type="number" step="any" required />
+          <span class="error" id="buyprice-error"></span>
+        </label>
+        <label>
+          Buy Date
+          <input id="buy-date" type="date" />
+        </label>
+        <label>
+          Notes
+          <textarea id="notes"></textarea>
+        </label>
+        <button type="submit">Save</button>
+        <button type="button" id="cancel-edit" class="hidden">Cancel</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
