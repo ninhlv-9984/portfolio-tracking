@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Plus, RefreshCw, Wallet, History } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -12,7 +13,12 @@ import { PriceSourceSettings } from './components/PriceSourceSettings'
 import { AssetAllocation } from './components/AssetAllocation'
 import { AllocationBreakdown } from './components/AllocationBreakdown'
 import { PositionHistory } from './components/PositionHistory'
+import { Header } from './components/Header'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { AuthPage } from './pages/Auth'
 import { usePortfolio } from './hooks/usePortfolio'
+import { useAuthStore } from './stores/authStore'
+import { authApi } from './lib/auth'
 import type { PortfolioEntry } from './types/portfolio'
 
 const queryClient = new QueryClient()
@@ -22,6 +28,7 @@ function PortfolioApp() {
   const [editingEntry, setEditingEntry] = useState<PortfolioEntry | undefined>()
   const { positions, metrics, isLoading, refetch } = usePortfolio()
   const [lastRefresh, setLastRefresh] = useState<string>(new Date().toISOString())
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   const handleAdd = () => {
     setEditingEntry(undefined)
@@ -43,8 +50,13 @@ function PortfolioApp() {
     setEditingEntry(undefined)
   }
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -127,9 +139,36 @@ function PortfolioApp() {
 }
 
 function App() {
+  const { token, setUser } = useAuthStore();
+
+  useEffect(() => {
+    // Verify token on app load
+    if (token) {
+      authApi.verify(token).then((response) => {
+        setUser(response.user);
+      }).catch(() => {
+        // Token is invalid, logout
+        useAuthStore.getState().logout();
+      });
+    }
+  }, [token]);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <PortfolioApp />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <PortfolioApp />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   )
 }

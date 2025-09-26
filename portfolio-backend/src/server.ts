@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { testConnection, initializeDatabase } from './db';
 import transactionsRouter from './routes/transactions';
 import historyRouter from './routes/history';
+import authRouter from './routes/auth';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', authRouter);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/history', historyRouter);
 

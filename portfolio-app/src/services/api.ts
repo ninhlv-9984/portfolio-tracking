@@ -1,12 +1,15 @@
+import { useAuthStore } from '@/stores/authStore';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export interface Transaction {
   id: string;
   asset: string;
-  type: 'buy' | 'sell';
+  type: 'buy' | 'sell' | 'deposit' | 'withdraw' | 'swap';
   quantity: number;
   price_usd: number;
   destination_asset?: string;
+  source_asset?: string;
   transaction_date?: string;
   notes?: string;
   created_at: string;
@@ -18,8 +21,9 @@ export interface HistoryEntry {
   action: string;
   transaction_id: string;
   asset: string;
-  type?: 'buy' | 'sell';
+  type?: 'buy' | 'sell' | 'deposit' | 'withdraw' | 'swap';
   destination_asset?: string;
+  source_asset?: string;
   quantity: number;
   price_usd: number;
   transaction_date?: string;
@@ -28,12 +32,18 @@ export interface HistoryEntry {
 }
 
 class ApiService {
+  private getAuthHeaders(): HeadersInit {
+    const token = useAuthStore.getState().token;
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
+
   private async fetchWithError(url: string, options?: RequestInit) {
     try {
       const response = await fetch(url, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
           ...options?.headers,
         },
       });
@@ -98,8 +108,9 @@ class ApiService {
   // Health check
   async checkHealth(): Promise<boolean> {
     try {
-      await this.fetchWithError(`${API_BASE_URL.replace('/api', '')}/health`);
-      return true;
+      // Health check doesn't need auth
+      const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
+      return response.ok;
     } catch {
       return false;
     }
