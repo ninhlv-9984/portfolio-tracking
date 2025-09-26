@@ -9,6 +9,7 @@ export interface GroupedPosition {
   earliestBuyDate?: string
   latestBuyDate?: string
   notes: string[]
+  locations: string[] // List of unique locations for this asset
 }
 
 export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPosition[] {
@@ -63,6 +64,11 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
       if (entry.notes) {
         existing.notes.push(entry.notes)
       }
+
+      // Collect unique locations
+      if (entry.location && !existing.locations.includes(entry.location)) {
+        existing.locations.push(entry.location)
+      }
     } else if (!isSell && !isWithdraw) {
       // Create new group for buy/deposit/swap transactions
       const initialPrice = entry.buy_price_usd || 1 // Stablecoins might default to $1
@@ -74,7 +80,8 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
         entries: [entry],
         earliestBuyDate: entry.buy_date,
         latestBuyDate: entry.buy_date,
-        notes: entry.notes ? [entry.notes] : []
+        notes: entry.notes ? [entry.notes] : [],
+        locations: entry.location ? [entry.location] : []
       })
     }
     // If it's a sell/withdraw and no existing position, skip it (can't sell/withdraw what you don't have)
@@ -116,8 +123,9 @@ export function convertGroupedToMetrics(
       pnl,
       pnlPercentage,
       assetInfo: assetPrice,
-      // Store the original entries for reference
-      groupedEntries: group.entries
-    } as PositionWithMetrics & { groupedEntries?: PortfolioEntry[] }
+      // Store the original entries and locations for reference
+      groupedEntries: group.entries,
+      locations: group.locations
+    } as PositionWithMetrics & { groupedEntries?: PortfolioEntry[], locations?: string[] }
   })
 }

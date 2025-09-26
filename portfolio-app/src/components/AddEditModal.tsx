@@ -16,6 +16,14 @@ import type { PortfolioEntry, TransactionType } from '@/types/portfolio'
 import { usePortfolioStore } from '@/stores/apiPortfolioStore'
 import { CRYPTO_ASSETS, searchAssets, type CryptoAsset } from '@/data/cryptoAssets'
 
+// Common locations for crypto assets
+const COMMON_LOCATIONS = [
+  { group: 'Exchanges', items: ['Binance', 'Coinbase', 'Kraken', 'KuCoin', 'OKX', 'Bybit', 'Gate.io', 'Huobi'] },
+  { group: 'Hardware Wallets', items: ['Ledger', 'Trezor', 'SafePal'] },
+  { group: 'Software Wallets', items: ['MetaMask', 'Trust Wallet', 'Exodus', 'Atomic Wallet'] },
+  { group: 'DeFi', items: ['Uniswap', 'PancakeSwap', 'Aave', 'Compound'] },
+]
+
 interface AddEditModalProps {
   isOpen: boolean
   onClose: () => void
@@ -34,17 +42,21 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
     buy_price_usd: '',
     destination_asset: 'USDT',
     source_asset: 'USDT',
+    location: '',
     buy_date: '',
     notes: ''
   })
-  
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [suggestions, setSuggestions] = useState<CryptoAsset[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedAsset, setSelectedAsset] = useState<CryptoAsset | undefined>()
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+  const [locationSearchTerm, setLocationSearchTerm] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const locationInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (entry) {
@@ -57,6 +69,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
         buy_price_usd: entry.buy_price_usd.toString(),
         destination_asset: entry.destination_asset || 'USDT',
         source_asset: entry.source_asset || 'USDT',
+        location: entry.location || '',
         buy_date: entry.buy_date || '',
         notes: entry.notes || ''
       })
@@ -71,6 +84,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
         buy_price_usd: '',
         destination_asset: 'USDT',
         source_asset: 'USDT',
+        location: '',
         buy_date: '',
         notes: ''
       })
@@ -203,6 +217,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
       buy_price_usd: finalPrice,
       destination_asset: formData.type === 'sell' ? formData.destination_asset : undefined,
       source_asset: formData.type === 'swap' ? formData.source_asset : undefined,
+      location: formData.location || undefined,
       buy_date: formData.buy_date || undefined,
       notes: formData.notes || undefined
     }
@@ -307,10 +322,15 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
                     onChange={(e) => handleAssetInputChange(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onFocus={() => {
-                      if (formData.asset.length === 0) {
+                      // Show suggestions on focus, even when editing
+                      if (formData.asset.length > 0) {
+                        const results = searchAssets(formData.asset)
+                        setSuggestions(results.slice(0, 8))
+                      } else {
                         setSuggestions(CRYPTO_ASSETS.slice(0, 8))
-                        setShowSuggestions(true)
                       }
+                      setShowSuggestions(true)
+                      setHighlightedIndex(-1)
                     }}
                     onBlur={() => {
                       setTimeout(() => setShowSuggestions(false), 200)
@@ -455,11 +475,68 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="location">Location (Optional)</Label>
+              <div className="relative">
+                <Input
+                  ref={locationInputRef}
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setFormData({ ...formData, location: value })
+                    setLocationSearchTerm(value)
+                    setShowLocationSuggestions(true)
+                  }}
+                  onFocus={() => setShowLocationSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                  placeholder="e.g., Binance, Ledger, MetaMask, OKX..."
+                  autoComplete="off"
+                />
+                {showLocationSuggestions && (
+                  <div className="absolute z-50 mt-1 w-full bg-popover rounded-md border shadow-md max-h-60 overflow-y-auto">
+                    {COMMON_LOCATIONS.map((group) => {
+                      const filteredItems = group.items.filter(item =>
+                        !locationSearchTerm || item.toLowerCase().includes(locationSearchTerm.toLowerCase())
+                      )
+
+                      if (filteredItems.length === 0) return null
+
+                      return (
+                        <div key={group.group}>
+                          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                            {group.group}
+                          </div>
+                          {filteredItems.map((location) => (
+                            <button
+                              key={location}
+                              type="button"
+                              className="w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                setFormData({ ...formData, location })
+                                setShowLocationSuggestions(false)
+                              }}
+                            >
+                              {location}
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Where is this asset stored? (Exchange, wallet, etc.)
+              </p>
+            </div>
+
+            <div className="grid gap-2">
               <Label htmlFor="buy_date">
                 {formData.type === 'buy' ? 'Buy' : formData.type === 'sell' ? 'Sell' : formData.type === 'swap' ? 'Swap' : formData.type === 'deposit' ? 'Deposit' : 'Withdraw'} Date (Optional)
               </Label>
-              <DatePicker 
-                date={selectedDate} 
+              <DatePicker
+                date={selectedDate}
                 onDateChange={handleDateChange}
                 placeholder="Select transaction date"
               />

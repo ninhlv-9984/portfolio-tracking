@@ -10,6 +10,7 @@ export interface Transaction {
   price_usd: number;
   destination_asset?: string;
   source_asset?: string;
+  location?: string;
   transaction_date?: string;
   notes?: string;
   created_at: string;
@@ -24,6 +25,7 @@ export interface HistoryEntry {
   type?: 'buy' | 'sell' | 'deposit' | 'withdraw' | 'swap';
   destination_asset?: string;
   source_asset?: string;
+  location?: string;
   quantity: number;
   price_usd: number;
   transaction_date?: string;

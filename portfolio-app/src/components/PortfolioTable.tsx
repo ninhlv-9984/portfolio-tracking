@@ -56,13 +56,18 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
 
   return (
     <div className="space-y-4">
-      <Input
-        type="text"
-        placeholder="Search by ticker or name..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex items-center justify-between">
+        <Input
+          type="text"
+          placeholder="Search by ticker or name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <p className="text-sm text-muted-foreground">
+          💡 To edit or delete transactions, go to the History tab
+        </p>
+      </div>
 
       <div className="rounded-lg border bg-card">
         <div className="overflow-x-auto">
@@ -124,7 +129,11 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
                 const hasMultipleEntries = groupedEntries && groupedEntries.length > 1
                 
                 return (
-                  <tr key={position.id} className="border-b hover:bg-muted/50 transition-colors">
+                  <tr
+                    key={position.id}
+                    className="border-b hover:bg-muted/50 transition-colors"
+                    title={hasMultipleEntries ? "View individual transactions in History tab" : undefined}
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         {position.assetInfo?.image && (
@@ -144,6 +153,11 @@ export function PortfolioTable({ positions, onEdit }: PortfolioTableProps) {
                           {hasMultipleEntries && (
                             <div className="text-xs text-muted-foreground">
                               {groupedEntries.length} transactions • Avg price: {formatCurrency(position.buy_price_usd)}
+                            </div>
+                          )}
+                          {(position as any).locations?.length > 0 && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              📍 {(position as any).locations.join(', ')}
                             </div>
                           )}
                         </div>

@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
 import { format } from 'date-fns'
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Edit,
+  Pencil,
+  Trash2,
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
@@ -28,6 +29,7 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
   const history = useHistoryStore((state) => state.history)
   const loadHistory = useHistoryStore((state) => state.loadHistory)
   const deleteEntry = usePortfolioStore((state) => state.deleteEntry)
+  const fetchEntry = usePortfolioStore((state) => state.fetchEntry)
   
   useEffect(() => {
     loadHistory()
@@ -199,11 +201,15 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                               <span className="font-semibold">{entry.asset}</span>
                               {entry.type && (
                                 <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                  entry.type === 'buy' 
+                                  entry.type === 'buy' || entry.type === 'deposit' || entry.type === 'swap'
                                     ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
                                     : 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
                                 }`}>
-                                  {entry.type === 'buy' ? 'Buy' : 'Sell'}
+                                  {entry.type === 'buy' ? 'Buy' :
+                                   entry.type === 'sell' ? 'Sell' :
+                                   entry.type === 'deposit' ? 'Deposit' :
+                                   entry.type === 'withdraw' ? 'Withdraw' :
+                                   entry.type === 'swap' ? 'Swap' : entry.type}
                                 </span>
                               )}
                               <span className={`text-xs px-2 py-0.5 rounded-full border ${getActionColor(entry.action)}`}>
@@ -217,19 +223,54 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                           </div>
                         </div>
                         {entry.action !== 'delete' && entry.entryId && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={async () => {
-                              if (window.confirm('Are you sure you want to delete this transaction?')) {
-                                await deleteEntry(entry.entryId)
-                                await loadHistory()
-                              }
-                            }}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            {onEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={async () => {
+                                  // Fetch the full transaction data
+                                  const fullEntry = await fetchEntry(entry.entryId)
+                                  if (fullEntry) {
+                                    onEdit(fullEntry)
+                                  } else {
+                                    // Fallback to creating from history entry
+                                    const editEntry: PortfolioEntry = {
+                                      id: entry.entryId,
+                                      asset: entry.asset,
+                                      type: entry.type || 'buy',
+                                      quantity: entry.quantity,
+                                      buy_price_usd: entry.buy_price_usd,
+                                      destination_asset: entry.destination_asset,
+                                      source_asset: undefined,
+                                      location: entry.location,
+                                      buy_date: entry.buy_date,
+                                      notes: entry.notes,
+                                      created_at: entry.timestamp,
+                                      updated_at: entry.timestamp
+                                    }
+                                    onEdit(editEntry)
+                                  }
+                                }}
+                                className="text-primary hover:text-primary"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this transaction?')) {
+                                  await deleteEntry(entry.entryId)
+                                  await loadHistory()
+                                }
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
 
@@ -297,6 +338,14 @@ export function PositionHistory({ onEdit }: PositionHistoryProps = {}) {
                           <span className="font-medium">
                             {format(new Date(entry.buy_date), 'PP')}
                           </span>
+                        </div>
+                      )}
+
+                      {/* Location */}
+                      {entry.location && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">📍 Location: </span>
+                          <span className="font-medium">{entry.location}</span>
                         </div>
                       )}
 

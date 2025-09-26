@@ -8,6 +8,7 @@ export interface HistoryEntry {
   asset: string
   type?: 'buy' | 'sell'
   destination_asset?: string
+  location?: string
   quantity: number
   buy_price_usd: number
   buy_date?: string
@@ -17,6 +18,7 @@ export interface HistoryEntry {
     buy_price_usd?: number
     buy_date?: string
     notes?: string
+    location?: string
   }
   metadata?: {
     totalValue?: number

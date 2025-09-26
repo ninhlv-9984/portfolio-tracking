@@ -12,6 +12,7 @@ import { EmptyState } from './components/EmptyState'
 import { PriceSourceSettings } from './components/PriceSourceSettings'
 import { AssetAllocation } from './components/AssetAllocation'
 import { AllocationBreakdown } from './components/AllocationBreakdown'
+import { LocationBreakdown } from './components/LocationBreakdown'
 import { PositionHistory } from './components/PositionHistory'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/Auth'
@@ -134,6 +135,7 @@ function PortfolioApp() {
                   <AssetAllocation positions={positions} />
                   <AllocationBreakdown positions={positions} />
                 </div>
+                <LocationBreakdown positions={positions} />
                 <PortfolioTable
                   positions={positions}
                   onEdit={handleEdit}

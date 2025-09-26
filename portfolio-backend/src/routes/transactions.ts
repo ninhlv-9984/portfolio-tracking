@@ -48,6 +48,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       price_usd,
       destination_asset,
       source_asset,
+      location,
       transaction_date,
       notes
     } = req.body;
@@ -60,10 +61,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       // Insert the main transaction
       const result = await client.query(
         `INSERT INTO transactions
-        (asset, type, quantity, price_usd, destination_asset, source_asset, transaction_date, notes, user_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (asset, type, quantity, price_usd, destination_asset, source_asset, location, transaction_date, notes, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *`,
-        [asset, type, quantity, price_usd, destination_asset, source_asset, transaction_date, notes, req.userId]
+        [asset, type, quantity, price_usd, destination_asset, source_asset, location, transaction_date, notes, req.userId]
       );
 
       const newTransaction = result.rows[0];
@@ -73,11 +74,12 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         const receiveAmount = quantity * price_usd;
         await client.query(
           `INSERT INTO transactions
-          (asset, type, quantity, price_usd, transaction_date, notes, user_id)
-          VALUES ($1, 'buy', $2, 1, $3, $4, $5)`,
+          (asset, type, quantity, price_usd, location, transaction_date, notes, user_id)
+          VALUES ($1, 'buy', $2, 1, $3, $4, $5, $6)`,
           [
             destination_asset,
             receiveAmount,
+            location,
             transaction_date,
             `Received from selling ${quantity} ${asset}`,
             req.userId
@@ -91,11 +93,12 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         // Create a sell transaction for the source stablecoin
         await client.query(
           `INSERT INTO transactions
-          (asset, type, quantity, price_usd, transaction_date, notes, user_id)
-          VALUES ($1, 'sell', $2, 1, $3, $4, $5)`,
+          (asset, type, quantity, price_usd, location, transaction_date, notes, user_id)
+          VALUES ($1, 'sell', $2, 1, $3, $4, $5, $6)`,
           [
             source_asset,
             swapCost,
+            location,
             transaction_date,
             `Used to swap for ${quantity} ${asset}`,
             req.userId
@@ -109,9 +112,9 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       // Record in history
       await client.query(
         `INSERT INTO history
-        (action, transaction_id, asset, type, destination_asset, source_asset, quantity, price_usd, transaction_date, notes, user_id)
-        VALUES ('add', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [newTransaction.id, asset, type, destination_asset, source_asset, quantity, price_usd, transaction_date, notes, req.userId]
+        (action, transaction_id, asset, type, destination_asset, source_asset, location, quantity, price_usd, transaction_date, notes, user_id)
+        VALUES ('add', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [newTransaction.id, asset, type, destination_asset, source_asset, location, quantity, price_usd, transaction_date, notes, req.userId]
       );
 
       await client.query('COMMIT');
@@ -139,6 +142,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       price_usd,
       destination_asset,
       source_asset,
+      location,
       transaction_date,
       notes
     } = req.body;
@@ -146,10 +150,10 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     const result = await pool.query(
       `UPDATE transactions
       SET asset = $1, type = $2, quantity = $3, price_usd = $4,
-          destination_asset = $5, source_asset = $6, transaction_date = $7, notes = $8
-      WHERE id = $9 AND user_id = $10
+          destination_asset = $5, source_asset = $6, location = $7, transaction_date = $8, notes = $9
+      WHERE id = $10 AND user_id = $11
       RETURNING *`,
-      [asset, type, quantity, price_usd, destination_asset, source_asset, transaction_date, notes, id, req.userId]
+      [asset, type, quantity, price_usd, destination_asset, source_asset, location, transaction_date, notes, id, req.userId]
     );
 
     if (result.rows.length === 0) {
@@ -188,14 +192,15 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
       // Record deletion in history
       await client.query(
         `INSERT INTO history
-        (action, transaction_id, asset, type, destination_asset, source_asset, quantity, price_usd, transaction_date, notes, user_id)
-        VALUES ('delete', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        (action, transaction_id, asset, type, destination_asset, source_asset, location, quantity, price_usd, transaction_date, notes, user_id)
+        VALUES ('delete', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [
           deletedTransaction.id,
           deletedTransaction.asset,
           deletedTransaction.type,
           deletedTransaction.destination_asset,
           deletedTransaction.source_asset,
+          deletedTransaction.location,
           deletedTransaction.quantity,
           deletedTransaction.price_usd,
           deletedTransaction.transaction_date,

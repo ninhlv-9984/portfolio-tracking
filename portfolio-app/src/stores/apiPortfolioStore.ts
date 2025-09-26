@@ -6,13 +6,14 @@ interface ApiPortfolioStore {
   entries: PortfolioEntry[]
   isLoading: boolean
   error: string | null
-  
+
   // Actions
   loadEntries: () => Promise<void>
   addEntry: (entry: Omit<PortfolioEntry, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
   updateEntry: (id: string, entry: Partial<PortfolioEntry>) => Promise<void>
   deleteEntry: (id: string) => Promise<void>
   getEntry: (id: string) => PortfolioEntry | undefined
+  fetchEntry: (id: string) => Promise<PortfolioEntry | null>
 }
 
 export const usePortfolioStore = create<ApiPortfolioStore>((set, get) => ({
@@ -32,6 +33,8 @@ export const usePortfolioStore = create<ApiPortfolioStore>((set, get) => ({
         quantity: parseFloat(t.quantity as any) || 0,
         buy_price_usd: parseFloat(t.price_usd as any) || 0,
         destination_asset: t.destination_asset,
+        source_asset: t.source_asset,
+        location: t.location,
         buy_date: t.transaction_date,
         notes: t.notes,
         created_at: t.created_at,
@@ -56,6 +59,8 @@ export const usePortfolioStore = create<ApiPortfolioStore>((set, get) => ({
         quantity: entry.quantity,
         price_usd: entry.buy_price_usd,
         destination_asset: entry.destination_asset,
+        source_asset: entry.source_asset,
+        location: entry.location,
         transaction_date: entry.buy_date,
         notes: entry.notes
       })
@@ -67,6 +72,8 @@ export const usePortfolioStore = create<ApiPortfolioStore>((set, get) => ({
         quantity: parseFloat(transaction.quantity as any) || 0,
         buy_price_usd: parseFloat(transaction.price_usd as any) || 0,
         destination_asset: transaction.destination_asset,
+        source_asset: transaction.source_asset,
+        location: transaction.location,
         buy_date: transaction.transaction_date,
         notes: transaction.notes,
         created_at: transaction.created_at,
@@ -102,6 +109,8 @@ export const usePortfolioStore = create<ApiPortfolioStore>((set, get) => ({
         quantity: updates.quantity || currentEntry.quantity,
         price_usd: updates.buy_price_usd || currentEntry.buy_price_usd,
         destination_asset: updates.destination_asset,
+        source_asset: updates.source_asset,
+        location: updates.location,
         transaction_date: updates.buy_date,
         notes: updates.notes
       })
@@ -145,5 +154,29 @@ export const usePortfolioStore = create<ApiPortfolioStore>((set, get) => ({
   
   getEntry: (id) => {
     return get().entries.find((entry) => entry.id === id)
+  },
+
+  fetchEntry: async (id) => {
+    try {
+      const transaction = await api.getTransaction(id)
+      const entry: PortfolioEntry = {
+        id: transaction.id,
+        asset: transaction.asset,
+        type: transaction.type,
+        quantity: parseFloat(transaction.quantity as any) || 0,
+        buy_price_usd: parseFloat(transaction.price_usd as any) || 0,
+        destination_asset: transaction.destination_asset,
+        source_asset: transaction.source_asset,
+        location: transaction.location,
+        buy_date: transaction.transaction_date,
+        notes: transaction.notes,
+        created_at: transaction.created_at,
+        updated_at: transaction.updated_at
+      }
+      return entry
+    } catch (error) {
+      console.error('Failed to fetch transaction:', error)
+      return null
+    }
   }
 }))

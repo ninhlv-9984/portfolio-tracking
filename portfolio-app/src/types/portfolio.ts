@@ -8,6 +8,7 @@ export interface PortfolioEntry {
   buy_price_usd: number
   destination_asset?: string // For sell/swap transactions
   source_asset?: string // For swap transactions (which stablecoin was used)
+  location?: string // Exchange or wallet where asset is stored
   buy_date?: string
   notes?: string
   created_at: string

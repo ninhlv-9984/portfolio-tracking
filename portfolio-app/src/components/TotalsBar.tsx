@@ -22,8 +22,8 @@ export function TotalsBar({ metrics, lastUpdated, onRefresh }: TotalsBarProps) {
           </div>
           {metrics.change24h !== 0 && (
             <div className={`flex items-center gap-1 mt-1 text-sm ${
-              metrics.change24h >= 0 
-                ? 'text-green-600 dark:text-green-400' 
+              metrics.change24h >= 0
+                ? 'text-green-600 dark:text-green-400'
                 : 'text-red-600 dark:text-red-400'
             }`}>
               {metrics.change24h >= 0 ? (
@@ -33,7 +33,7 @@ export function TotalsBar({ metrics, lastUpdated, onRefresh }: TotalsBarProps) {
               )}
               <span>
                 {metrics.change24h >= 0 ? '+' : ''}{formatCurrency(metrics.change24h)}
-                {' '}({formatPercentage(metrics.change24hPercentage)})
+                {' '}({formatPercentage(metrics.change24hPercentage)}) 24h
               </span>
             </div>
           )}
