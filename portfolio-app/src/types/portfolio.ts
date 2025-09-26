@@ -1,4 +1,4 @@
-export type TransactionType = 'buy' | 'sell' | 'deposit' | 'withdraw'
+export type TransactionType = 'buy' | 'sell' | 'deposit' | 'withdraw' | 'swap'
 
 export interface PortfolioEntry {
   id: string
@@ -6,7 +6,8 @@ export interface PortfolioEntry {
   type: TransactionType
   quantity: number
   buy_price_usd: number
-  destination_asset?: string // For sell transactions
+  destination_asset?: string // For sell/swap transactions
+  source_asset?: string // For swap transactions (which stablecoin was used)
   buy_date?: string
   notes?: string
   created_at: string

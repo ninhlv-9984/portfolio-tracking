@@ -45,6 +45,7 @@ router.post('/', async (req: Request, res: Response) => {
       quantity,
       price_usd,
       destination_asset,
+      source_asset,
       transaction_date,
       notes
     } = req.body;
@@ -57,10 +58,10 @@ router.post('/', async (req: Request, res: Response) => {
       // Insert the main transaction
       const result = await client.query(
         `INSERT INTO transactions 
-        (asset, type, quantity, price_usd, destination_asset, transaction_date, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (asset, type, quantity, price_usd, destination_asset, source_asset, transaction_date, notes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *`,
-        [asset, type, quantity, price_usd, destination_asset, transaction_date, notes]
+        [asset, type, quantity, price_usd, destination_asset, source_asset, transaction_date, notes]
       );
 
       const newTransaction = result.rows[0];
@@ -81,15 +82,32 @@ router.post('/', async (req: Request, res: Response) => {
         );
       }
 
+      // If it's a swap transaction, deduct from source stablecoin and add the crypto
+      if (type === 'swap' && source_asset) {
+        const swapCost = quantity * price_usd;
+        // Create a sell transaction for the source stablecoin
+        await client.query(
+          `INSERT INTO transactions 
+          (asset, type, quantity, price_usd, transaction_date, notes)
+          VALUES ($1, 'sell', $2, 1, $3, $4)`,
+          [
+            source_asset,
+            swapCost,
+            transaction_date,
+            `Used to swap for ${quantity} ${asset}`
+          ]
+        );
+      }
+
       // For deposits with no price, use 0 (will fetch current price on frontend)
       const finalPriceUsd = (type === 'deposit' || type === 'withdraw') && !price_usd ? 0 : price_usd;
 
       // Record in history
       await client.query(
         `INSERT INTO history 
-        (action, transaction_id, asset, type, destination_asset, quantity, price_usd, transaction_date, notes)
-        VALUES ('add', $1, $2, $3, $4, $5, $6, $7, $8)`,
-        [newTransaction.id, asset, type, destination_asset, quantity, price_usd, transaction_date, notes]
+        (action, transaction_id, asset, type, destination_asset, source_asset, quantity, price_usd, transaction_date, notes)
+        VALUES ('add', $1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [newTransaction.id, asset, type, destination_asset, source_asset, quantity, price_usd, transaction_date, notes]
       );
 
       await client.query('COMMIT');
@@ -116,6 +134,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       quantity,
       price_usd,
       destination_asset,
+      source_asset,
       transaction_date,
       notes
     } = req.body;
@@ -123,10 +142,10 @@ router.put('/:id', async (req: Request, res: Response) => {
     const result = await pool.query(
       `UPDATE transactions 
       SET asset = $1, type = $2, quantity = $3, price_usd = $4, 
-          destination_asset = $5, transaction_date = $6, notes = $7
-      WHERE id = $8
+          destination_asset = $5, source_asset = $6, transaction_date = $7, notes = $8
+      WHERE id = $9
       RETURNING *`,
-      [asset, type, quantity, price_usd, destination_asset, transaction_date, notes, id]
+      [asset, type, quantity, price_usd, destination_asset, source_asset, transaction_date, notes, id]
     );
 
     if (result.rows.length === 0) {
@@ -165,13 +184,14 @@ router.delete('/:id', async (req: Request, res: Response) => {
       // Record deletion in history
       await client.query(
         `INSERT INTO history 
-        (action, transaction_id, asset, type, destination_asset, quantity, price_usd, transaction_date, notes)
-        VALUES ('delete', $1, $2, $3, $4, $5, $6, $7, $8)`,
+        (action, transaction_id, asset, type, destination_asset, source_asset, quantity, price_usd, transaction_date, notes)
+        VALUES ('delete', $1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           deletedTransaction.id,
           deletedTransaction.asset,
           deletedTransaction.type,
           deletedTransaction.destination_asset,
+          deletedTransaction.source_asset,
           deletedTransaction.quantity,
           deletedTransaction.price_usd,
           deletedTransaction.transaction_date,

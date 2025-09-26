@@ -20,6 +20,7 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
     const isWithdraw = entry.type === 'withdraw'
     const isDeposit = entry.type === 'deposit'
     const isBuy = entry.type === 'buy'
+    const isSwap = entry.type === 'swap'
     
     // Calculate quantity change based on transaction type
     const quantityChange = (isSell || isWithdraw) ? -entry.quantity : entry.quantity
@@ -39,7 +40,7 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
         const depositPrice = entry.buy_price_usd || existing.averageBuyPrice
         newTotalInvestment = existing.totalInvestment + (entry.quantity * depositPrice)
       } else {
-        // For buys, add to the investment
+        // For buys and swaps, add to the investment
         newTotalInvestment = existing.totalInvestment + (entry.quantity * entry.buy_price_usd)
       }
       
@@ -63,7 +64,7 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
         existing.notes.push(entry.notes)
       }
     } else if (!isSell && !isWithdraw) {
-      // Create new group for buy/deposit transactions
+      // Create new group for buy/deposit/swap transactions
       const initialPrice = entry.buy_price_usd || 0 // For deposits with no price
       grouped.set(entry.asset, {
         asset: entry.asset,
