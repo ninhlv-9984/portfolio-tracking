@@ -13,13 +13,13 @@ import { PriceSourceSettings } from './components/PriceSourceSettings'
 import { AssetAllocation } from './components/AssetAllocation'
 import { AllocationBreakdown } from './components/AllocationBreakdown'
 import { PositionHistory } from './components/PositionHistory'
-import { Header } from './components/Header'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/Auth'
 import { usePortfolio } from './hooks/usePortfolio'
 import { useAuthStore } from './stores/authStore'
 import { authApi } from './lib/auth'
 import type { PortfolioEntry } from './types/portfolio'
+import { LogOut, User } from 'lucide-react'
 
 const queryClient = new QueryClient()
 
@@ -28,7 +28,7 @@ function PortfolioApp() {
   const [editingEntry, setEditingEntry] = useState<PortfolioEntry | undefined>()
   const { positions, metrics, isLoading, refetch } = usePortfolio()
   const [lastRefresh, setLastRefresh] = useState<string>(new Date().toISOString())
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const { isAuthenticated, user, logout } = useAuthStore()
 
   const handleAdd = () => {
     setEditingEntry(undefined)
@@ -50,13 +50,17 @@ function PortfolioApp() {
     setEditingEntry(undefined)
   }
 
+  const handleLogout = () => {
+    logout()
+    window.location.href = '/auth'
+  }
+
   if (!isAuthenticated) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -83,6 +87,21 @@ function PortfolioApp() {
                   Add Transaction
                 </Button>
               )}
+              <div className="flex items-center gap-2 ml-4 pl-4 border-l">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {user?.username || user?.email}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="ml-2"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -103,8 +103,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         );
       }
 
-      // For deposits with no price, use 0 (will fetch current price on frontend)
-      const finalPriceUsd = (type === 'deposit' || type === 'withdraw') && !price_usd ? 0 : price_usd;
+      // For withdrawals with no price, use 0. Deposits should always have a price for cost basis
+      const finalPriceUsd = type === 'withdraw' && !price_usd ? 0 : price_usd;
 
       // Record in history
       await client.query(

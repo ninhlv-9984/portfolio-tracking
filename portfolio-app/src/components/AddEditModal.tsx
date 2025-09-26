@@ -138,7 +138,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    
+
     if (!formData.asset) {
       newErrors.asset = 'Asset is required'
     } else if (!CRYPTO_ASSETS.find(a => a.symbol === formData.asset)) {
@@ -150,16 +150,31 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
       newErrors.quantity = 'Quantity must be a positive number'
     }
 
-    // Price is optional for deposits/withdrawals, required for others
-    if (formData.type === 'buy' || formData.type === 'sell' || formData.type === 'swap') {
+    // Check if asset is a stablecoin
+    const isStablecoin = ['USDT', 'USDC', 'BUSD'].includes(formData.asset)
+
+    // Price validation logic
+    if (formData.type === 'withdraw') {
+      // Price is optional for withdrawals
+      if (formData.buy_price_usd) {
+        const price = parseFloat(formData.buy_price_usd)
+        if (isNaN(price) || price <= 0) {
+          newErrors.buy_price_usd = 'Price must be a positive number if provided'
+        }
+      }
+    } else if (formData.type === 'deposit' && isStablecoin) {
+      // For stablecoin deposits, price is optional (defaults to $1)
+      if (formData.buy_price_usd) {
+        const price = parseFloat(formData.buy_price_usd)
+        if (isNaN(price) || price <= 0) {
+          newErrors.buy_price_usd = 'Price must be a positive number if provided'
+        }
+      }
+    } else {
+      // Price is required for buy, sell, swap, and non-stablecoin deposits
       const price = parseFloat(formData.buy_price_usd)
       if (!formData.buy_price_usd || isNaN(price) || price <= 0) {
         newErrors.buy_price_usd = 'Price must be a positive number'
-      }
-    } else if (formData.buy_price_usd) {
-      const price = parseFloat(formData.buy_price_usd)
-      if (isNaN(price) || price <= 0) {
-        newErrors.buy_price_usd = 'Price must be a positive number if provided'
       }
     }
 
@@ -174,11 +189,18 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
       return
     }
 
+    // For stablecoin deposits without price, default to $1
+    const isStablecoin = ['USDT', 'USDC', 'BUSD'].includes(formData.asset)
+    let finalPrice = formData.buy_price_usd ? parseFloat(formData.buy_price_usd) : 0
+    if (formData.type === 'deposit' && isStablecoin && !formData.buy_price_usd) {
+      finalPrice = 1 // Stablecoins default to $1
+    }
+
     const data = {
       asset: formData.asset,
       type: formData.type,
       quantity: parseFloat(formData.quantity),
-      buy_price_usd: formData.buy_price_usd ? parseFloat(formData.buy_price_usd) : 0,
+      buy_price_usd: finalPrice,
       destination_asset: formData.type === 'sell' ? formData.destination_asset : undefined,
       source_asset: formData.type === 'swap' ? formData.source_asset : undefined,
       buy_date: formData.buy_date || undefined,
@@ -398,7 +420,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
               
               <div className="grid gap-2">
                 <Label htmlFor="buy_price_usd">
-                  {formData.type === 'deposit' || formData.type === 'withdraw' ? 'Price at time' : formData.type === 'swap' ? 'Swap' : formData.type === 'buy' ? 'Buy' : 'Sell'} Price (USD)
+                  {formData.type === 'deposit' ? 'Price at Deposit' : formData.type === 'withdraw' ? 'Price at Withdrawal' : formData.type === 'swap' ? 'Swap' : formData.type === 'buy' ? 'Buy' : 'Sell'} Price (USD)
                 </Label>
                 <Input
                   id="buy_price_usd"
@@ -406,15 +428,27 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
                   step="any"
                   value={formData.buy_price_usd}
                   onChange={(e) => setFormData({ ...formData, buy_price_usd: e.target.value })}
-                  placeholder={formData.type === 'deposit' || formData.type === 'withdraw' ? 'Optional - current price' : '50000'}
+                  placeholder={
+                    formData.type === 'withdraw' ? 'Optional - current price' :
+                    (formData.type === 'deposit' && ['USDT', 'USDC', 'BUSD'].includes(formData.asset)) ? 'Optional - defaults to $1' :
+                    '50000'
+                  }
                   className={errors.buy_price_usd ? 'border-red-500' : ''}
                 />
                 {errors.buy_price_usd && (
                   <p className="text-sm text-red-500">{errors.buy_price_usd}</p>
                 )}
-                {(formData.type === 'deposit' || formData.type === 'withdraw') && (
+                {formData.type === 'deposit' && (
                   <p className="text-xs text-muted-foreground">
-                    {formData.type === 'deposit' ? 'Optional - for tracking cost basis of existing assets' : 'Optional - price when withdrawing'}
+                    {['USDT', 'USDC', 'BUSD'].includes(formData.asset)
+                      ? 'Optional for stablecoins (defaults to $1)'
+                      : 'Enter the price when you acquired these assets for accurate P&L tracking'
+                    }
+                  </p>
+                )}
+                {formData.type === 'withdraw' && (
+                  <p className="text-xs text-muted-foreground">
+                    Optional - price when withdrawing (for record keeping)
                   </p>
                 )}
               </div>
@@ -444,7 +478,7 @@ export function AddEditModal({ isOpen, onClose, entry }: AddEditModalProps) {
             {formData.quantity && formData.buy_price_usd && (
               <div className="p-3 bg-muted rounded-lg">
                 <div className="text-sm text-muted-foreground">
-                  {formData.type === 'deposit' ? 'Asset Value' : formData.type === 'withdraw' ? 'Withdrawal Value' : formData.type === 'sell' ? 'Sale Proceeds' : formData.type === 'swap' ? 'Swap Value' : 'Total Investment'}
+                  {formData.type === 'deposit' ? 'Deposit Value (Cost Basis)' : formData.type === 'withdraw' ? 'Withdrawal Value' : formData.type === 'sell' ? 'Sale Proceeds' : formData.type === 'swap' ? 'Swap Value' : 'Total Investment'}
                 </div>
                 <div className="text-lg font-semibold">
                   ${(parseFloat(formData.quantity) * parseFloat(formData.buy_price_usd)).toLocaleString('en-US', {

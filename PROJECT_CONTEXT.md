@@ -2,7 +2,7 @@
 
 ## 📋 Project Overview
 
-A full-stack cryptocurrency portfolio tracking application that allows users to manage their crypto investments with real-time price tracking, profit/loss calculations, and transaction history.
+A full-stack cryptocurrency portfolio tracking application with **user authentication** that allows users to manage their crypto investments with real-time price tracking, profit/loss calculations, and transaction history. Each user has their own isolated portfolio data.
 
 ## 🏗️ Architecture
 
@@ -12,13 +12,16 @@ A full-stack cryptocurrency portfolio tracking application that allows users to 
 - React 18 with TypeScript
 - Vite (build tool)
 - TailwindCSS + shadcn/ui (styling)
-- Zustand (state management - removed localStorage, now API-only)
+- Zustand (state management - API-only, no localStorage)
 - TanStack Query (React Query) for data fetching
+- React Router DOM (routing and navigation)
 - Recharts (data visualization)
 
 **Backend:**
 - Node.js + Express + TypeScript
 - PostgreSQL database
+- JWT authentication
+- bcrypt for password hashing
 - RESTful API architecture
 
 ## 📁 Project Structure
@@ -33,21 +36,28 @@ portfolio-tracking/
 │   │   │   ├── AddEditModal.tsx
 │   │   │   ├── AssetAllocation.tsx
 │   │   │   ├── PositionHistory.tsx
+│   │   │   ├── LoginForm.tsx
+│   │   │   ├── RegisterForm.tsx
+│   │   │   ├── Header.tsx
+│   │   │   ├── ProtectedRoute.tsx
 │   │   │   └── ...
+│   │   ├── pages/            # Page components
+│   │   │   └── Auth.tsx
 │   │   ├── stores/           # State management
-│   │   │   ├── apiPortfolioStore.ts  # Main store (API-only)
-│   │   │   └── apiHistoryStore.ts    # History store (API-only)
+│   │   │   ├── apiPortfolioStore.ts  # Portfolio store
+│   │   │   ├── apiHistoryStore.ts    # History store
+│   │   │   └── authStore.ts          # Authentication store
 │   │   ├── services/         # External services
-│   │   │   ├── api.ts        # Backend API client
+│   │   │   ├── api.ts        # Backend API client (with auth)
 │   │   │   ├── priceManager.ts # Crypto price fetching
 │   │   │   └── scraperService.ts # Fallback price scraper
-│   │   ├── hooks/            # Custom React hooks
-│   │   │   └── usePortfolio.ts
-│   │   ├── types/            # TypeScript definitions
 │   │   ├── lib/              # Utilities
-│   │   │   └── utils.ts      # Formatting functions
+│   │   │   ├── utils.ts      # Formatting functions
+│   │   │   └── auth.ts       # Auth API functions
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── types/            # TypeScript definitions
 │   │   └── data/             # Static data
-│   │       └── cryptoAssets.ts # Crypto metadata
+│   │       └── cryptoAssets.ts # Crypto metadata (CoinGecko URLs)
 │   └── package.json
 │
 └── portfolio-backend/          # Backend Node.js application
@@ -55,10 +65,17 @@ portfolio-tracking/
     │   ├── server.ts          # Express server setup
     │   ├── db/
     │   │   ├── index.ts       # Database connection
-    │   │   └── schema.sql     # PostgreSQL schema
+    │   │   ├── schema.sql     # Initial schema
+    │   │   └── migrations/    # Database migrations
+    │   │       ├── migrate-add-users.sql
+    │   │       ├── migrate-add-transaction-types.sql
+    │   │       └── migrate-add-swap-type.sql
+    │   ├── middleware/
+    │   │   └── auth.ts        # JWT authentication middleware
     │   └── routes/
-    │       ├── transactions.ts # Transaction CRUD endpoints
-    │       └── history.ts     # History endpoints
+    │       ├── auth.ts        # Authentication endpoints
+    │       ├── transactions.ts # Transaction CRUD (protected)
+    │       └── history.ts     # History endpoints (protected)
     ├── .env                   # Environment variables
     └── package.json
 ```
@@ -67,13 +84,23 @@ portfolio-tracking/
 
 ### PostgreSQL Tables
 
+**users**
+- `id` (UUID) - Primary key
+- `email` (VARCHAR) - Unique email address
+- `username` (VARCHAR) - Unique username
+- `password_hash` (VARCHAR) - Bcrypt hashed password
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
 **transactions**
 - `id` (UUID) - Primary key
+- `user_id` (UUID) - Foreign key to users
 - `asset` (VARCHAR) - Crypto symbol (BTC, ETH, etc.)
-- `type` (ENUM) - 'buy' or 'sell'
+- `type` (ENUM) - 'buy', 'sell', 'deposit', 'withdraw', 'swap'
 - `quantity` (DECIMAL) - Amount of crypto
 - `price_usd` (DECIMAL) - Price per unit in USD
-- `destination_asset` (VARCHAR) - For sells, which stablecoin received
+- `destination_asset` (VARCHAR) - For sells/swaps, which asset received
+- `source_asset` (VARCHAR) - For swaps, which stablecoin used
 - `transaction_date` (DATE) - Optional transaction date
 - `notes` (TEXT) - Optional notes
 - `created_at` (TIMESTAMP)
@@ -81,39 +108,64 @@ portfolio-tracking/
 
 **history**
 - `id` (UUID) - Primary key
+- `user_id` (UUID) - Foreign key to users
 - `action` (VARCHAR) - 'add', 'update', or 'delete'
 - `transaction_id` (UUID) - Foreign key to transactions
 - `asset` (VARCHAR)
-- `type` (ENUM) - 'buy' or 'sell'
+- `type` (ENUM) - Transaction type
 - `quantity` (DECIMAL)
 - `price_usd` (DECIMAL)
+- `destination_asset` (VARCHAR)
+- `source_asset` (VARCHAR)
 - `timestamp` (TIMESTAMP)
-- Additional fields mirror transaction data
 
 ## 🔑 Key Features
 
+### Authentication & Security
+1. **User Management**
+   - Registration with email and username
+   - Login with email or username
+   - JWT token authentication
+   - Password hashing with bcrypt
+   - Protected routes requiring authentication
+
+2. **User Data Isolation**
+   - Each user has separate portfolio
+   - Transactions linked to user IDs
+   - API endpoints filter by authenticated user
+
+### Transaction Types
+1. **Buy** - Purchase crypto with external funds
+2. **Sell** - Sell crypto and receive stablecoins
+3. **Swap** - Exchange stablecoins for crypto
+4. **Deposit** - Add existing assets to portfolio
+5. **Withdraw** - Remove assets from portfolio
+
 ### Core Functionality
 1. **Transaction Management**
-   - Add buy/sell transactions
-   - Edit existing transactions
-   - Delete transactions
-   - Support for selling to stablecoins (USDT, USDC, BUSD)
+   - Add transactions (all types)
+   - Delete transactions from history
+   - Support for stablecoin destinations (USDT, USDC, BUSD)
+   - Source stablecoin selection for swaps
 
 2. **Portfolio Visualization**
    - Real-time portfolio value calculation
    - Profit/Loss tracking (total and per asset)
    - Asset allocation pie chart
-   - Grouped view by asset with average prices
+   - Grouped view by asset with weighted average prices
+   - Clean UI without edit/delete buttons in main view
 
 3. **Price Data**
    - Primary: CoinGecko API integration
    - Fallback: Web scraper (Binance, CoinMarketCap)
    - Real-time price updates every 60 seconds
+   - CoinGecko image URLs for crypto logos
 
 4. **History Tracking**
    - Complete transaction history
-   - Action timeline (adds, deletes)
+   - Delete functionality in history view
    - Searchable and filterable
+   - User-specific history
 
 ## 🔧 Configuration
 
@@ -121,17 +173,19 @@ portfolio-tracking/
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
+DB_USER=cloud
+DB_PASSWORD=cloud
 DB_NAME=portfolio_tracker
 PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
+JWT_SECRET=your-secret-key-change-in-production
 ```
 
 ### Frontend
 - API endpoint: `http://localhost:3001/api`
 - Configured in `src/services/api.ts`
+- Auth headers automatically included
 
 ## 🚀 Running the Application
 
@@ -142,9 +196,15 @@ FRONTEND_URL=http://localhost:5173
 ### Database Setup
 ```bash
 # Create database
-psql -U postgres
+psql -U cloud
 CREATE DATABASE portfolio_tracker;
 \q
+
+# Apply migrations (from portfolio-backend directory)
+PGPASSWORD=cloud psql -U cloud -d portfolio_tracker -h localhost -f src/db/schema.sql
+PGPASSWORD=cloud psql -U cloud -d portfolio_tracker -h localhost -f src/db/migrate-add-users.sql
+PGPASSWORD=cloud psql -U cloud -d portfolio_tracker -h localhost -f src/db/migrate-add-transaction-types.sql
+PGPASSWORD=cloud psql -U cloud -d portfolio_tracker -h localhost -f src/db/migrate-add-swap-type.sql
 ```
 
 ### Backend
@@ -161,124 +221,150 @@ npm install
 npm run dev  # Runs on port 5173
 ```
 
-## 🎨 UI/UX Decisions
+## 🎨 UI/UX Features
 
-1. **Dark/Light Mode**: Automatic theme detection with manual toggle
-2. **Responsive Design**: Works on desktop and mobile
-3. **Number Formatting**: 
+1. **Authentication Flow**
+   - Login/Register forms with validation
+   - Auto-redirect to auth page when not logged in
+   - Session persistence across refreshes
+   - User info display in header
+   - Logout functionality
+
+2. **Dark/Light Mode**: Automatic theme detection with manual toggle
+
+3. **Number Formatting**:
    - Currency: $1,234.56
    - Crypto amounts: Smart formatting (0.5, 1.25, 0.00012345)
-   - Percentages: Clean display without unnecessary decimals
-4. **Transaction Grouping**: Same assets grouped with weighted average prices
+   - Percentages: Clean display
 
-## 📝 Important Implementation Details
+4. **Transaction Interface**:
+   - 5 transaction types in modal (3x2 grid layout)
+   - Stablecoin selection for swaps
+   - Optional price for deposits/withdrawals
+   - Clean main dashboard (no action buttons)
+   - Delete-only functionality in history
 
-### State Management Evolution
-- **Initially**: Used Zustand with localStorage persistence
-- **Current**: API-only approach, no local storage
-- All data stored in PostgreSQL database
-- Removed hybrid store complexity
+## 📝 API Endpoints
 
-### API Communication
-- RESTful endpoints for all CRUD operations
-- CORS configured for development (allows all localhost ports)
-- Error handling with user-friendly messages
-- Automatic string-to-number conversion for database decimals
+### Authentication (Public)
+- `POST /api/auth/register` - Create new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/verify` - Verify JWT token
 
-### Price Fetching Strategy
-1. Try CoinGecko API first
-2. If rate limited, fallback to scraper
-3. Scraper uses Binance and CoinMarketCap public endpoints
-4. Caches prices for 60 seconds
-
-### Transaction Type Handling
-- **Buy**: Adds to holdings
-- **Sell**: Reduces holdings AND automatically creates stablecoin buy transaction
-- Proper cost basis tracking with weighted averages
-
-## 🐛 Known Issues & Solutions
-
-### Issue 1: CORS Errors
-**Solution**: Backend configured to allow all localhost ports in development
-
-### Issue 2: PostgreSQL Decimal as Strings
-**Solution**: `parseFloat()` conversion in API stores
-
-### Issue 3: Number Formatting
-**Solution**: Custom `formatCryptoAmount()` function handles various decimal places
-
-## 🔄 Recent Changes
-
-1. **Removed localStorage** - Now uses PostgreSQL exclusively
-2. **Simplified stores** - Removed hybrid store pattern
-3. **Added transaction types** - Buy/sell with stablecoin destinations
-4. **Improved formatting** - Better number display for crypto amounts
-5. **Fixed CORS** - Permissive development configuration
-
-## 📚 API Endpoints
-
-### Transactions
-- `GET /api/transactions` - Get all transactions
+### Transactions (Protected - Requires JWT)
+- `GET /api/transactions` - Get user's transactions
 - `GET /api/transactions/:id` - Get single transaction
 - `POST /api/transactions` - Create transaction
 - `PUT /api/transactions/:id` - Update transaction
 - `DELETE /api/transactions/:id` - Delete transaction
 
-### History
-- `GET /api/history` - Get all history
+### History (Protected - Requires JWT)
+- `GET /api/history` - Get user's history
 - `GET /api/history/asset/:asset` - Get history by asset
 - `GET /api/history/transaction/:id` - Get history by transaction
 
-## 🎯 Future Improvements
+## 🔄 Recent Major Updates
 
-1. User authentication system
-2. Multiple portfolio support
-3. Export to CSV/Excel
-4. More chart types (line charts, candlesticks)
-5. Mobile app version
-6. WebSocket for real-time prices
-7. Tax reporting features
-8. DeFi integration
+1. **User Authentication System**
+   - Complete JWT-based auth
+   - User registration and login
+   - Protected routes and API endpoints
+   - User-specific data isolation
 
-## 🤝 Development Tips
+2. **Extended Transaction Types**
+   - Added deposit, withdraw, and swap types
+   - Swap allows using stablecoins to buy crypto
+   - Deposit/withdraw for external wallet transfers
 
-1. **Database changes**: Update both `schema.sql` and TypeScript types
-2. **Adding new crypto**: Update `cryptoAssets.ts` with metadata
-3. **Price sources**: Can add more scrapers in `scraperService.ts`
-4. **Component styling**: Uses TailwindCSS classes, check `tailwind.config.js`
-5. **State updates**: All through API calls, no direct localStorage manipulation
+3. **UI Improvements**
+   - Removed edit/delete buttons from main dashboard
+   - Delete-only functionality in history
+   - Fixed crypto logo 403 errors (switched to CoinGecko CDN)
+   - Added user header with logout
 
-## 📦 Dependencies to Note
+4. **Database Enhancements**
+   - Added users table
+   - Added source_asset for swap transactions
+   - User ID foreign keys on all tables
 
-**Critical Frontend**:
-- `zustand` - State management (v4.5.5)
-- `@tanstack/react-query` - Data fetching (v5.62.7)
-- `recharts` - Charts (v2.13.3)
-- `date-fns` - Date formatting (v4.1.0)
+## 🐛 Known Issues & Solutions
 
-**Critical Backend**:
-- `pg` - PostgreSQL client (v8.13.1)
-- `express` - Web framework (v4.21.2)
-- `cors` - CORS middleware (v2.8.5)
-- `dotenv` - Environment variables (v16.4.7)
+### Issue 1: CoinGecko Rate Limiting
+**Solution**: Implemented web scraper fallback using Binance/CoinMarketCap
+
+### Issue 2: Crypto Logo 403 Errors
+**Solution**: Switched from cryptologos.cc to CoinGecko's CDN
+
+### Issue 3: PostgreSQL Decimals as Strings
+**Solution**: `parseFloat()` conversion in frontend
+
+### Issue 4: Transaction Types
+**Solution**: Proper handling of all 5 transaction types with appropriate UI
 
 ## 🔐 Security Considerations
 
-1. No API keys stored in frontend
-2. CORS restricted to development origins
-3. SQL injection prevention via parameterized queries
-4. Input validation on both frontend and backend
-5. No sensitive data in localStorage
+1. **Authentication**
+   - JWT tokens expire after 7 days
+   - Passwords hashed with bcrypt (10 rounds)
+   - Token verification on app load
+   - Protected API routes require valid JWT
 
-## 💡 Architectural Decisions
+2. **Data Protection**
+   - User data isolation
+   - SQL injection prevention via parameterized queries
+   - Input validation on frontend and backend
+   - No sensitive data in localStorage
 
-1. **API-First**: All data operations go through backend
-2. **TypeScript Everywhere**: Type safety across full stack
-3. **Component-Based**: Reusable UI components
-4. **Responsive First**: Mobile-friendly from the start
-5. **Real Database**: PostgreSQL for production-ready data persistence
+3. **CORS Configuration**
+   - Restricted to specific localhost ports in development
+   - Credentials allowed for JWT cookies
+
+## 💡 Development Tips
+
+1. **Adding New Features**: Always consider user context
+2. **Database Changes**: Update migrations and TypeScript types
+3. **API Changes**: Update both frontend and backend auth headers
+4. **Testing Auth**: Create multiple users to test isolation
+5. **Transaction Logic**: Handle all 5 types appropriately
+
+## 📦 Key Dependencies
+
+**Frontend**:
+- `react-router-dom` - Routing (v7.9.2)
+- `zustand` - State management (v4.5.5)
+- `@tanstack/react-query` - Data fetching (v5.62.7)
+- `recharts` - Charts (v2.13.3)
+
+**Backend**:
+- `jsonwebtoken` - JWT auth (latest)
+- `bcrypt` - Password hashing (latest)
+- `pg` - PostgreSQL client (v8.13.1)
+- `express` - Web framework (v4.21.2)
+
+## 🎯 Usage Flow
+
+1. **New User**:
+   - Navigate to app → Redirected to `/auth`
+   - Register with email, username, password
+   - Automatically logged in
+   - Start adding transactions
+
+2. **Existing User**:
+   - Login with email/username and password
+   - View portfolio dashboard
+   - Add transactions (buy/sell/swap/deposit/withdraw)
+   - Track P&L and allocation
+   - View history
+   - Logout when done
+
+3. **Transaction Flow**:
+   - **Buy**: Add new crypto with USD
+   - **Sell**: Convert crypto to stablecoin
+   - **Swap**: Use stablecoin to buy crypto
+   - **Deposit**: Add existing holdings
+   - **Withdraw**: Remove from tracking
 
 ---
 
 *Last Updated: September 2025*
-*This documentation provides context for AI assistants to understand and work with the project effectively.*
+*This documentation provides complete context for AI assistants to understand and work with the project effectively, including all authentication and recent feature additions.*

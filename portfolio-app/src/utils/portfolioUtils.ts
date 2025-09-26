@@ -36,8 +36,8 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
         const reduceValue = entry.quantity * existing.averageBuyPrice
         newTotalInvestment = Math.max(0, existing.totalInvestment - reduceValue)
       } else if (isDeposit) {
-        // For deposits, use provided price or current average
-        const depositPrice = entry.buy_price_usd || existing.averageBuyPrice
+        // For deposits, use provided price (stablecoins might have $1 default)
+        const depositPrice = entry.buy_price_usd || 1 // Stablecoins default to $1
         newTotalInvestment = existing.totalInvestment + (entry.quantity * depositPrice)
       } else {
         // For buys and swaps, add to the investment
@@ -65,7 +65,7 @@ export function groupPositionsByAsset(entries: PortfolioEntry[]): GroupedPositio
       }
     } else if (!isSell && !isWithdraw) {
       // Create new group for buy/deposit/swap transactions
-      const initialPrice = entry.buy_price_usd || 0 // For deposits with no price
+      const initialPrice = entry.buy_price_usd || 1 // Stablecoins might default to $1
       grouped.set(entry.asset, {
         asset: entry.asset,
         totalQuantity: entry.quantity,
