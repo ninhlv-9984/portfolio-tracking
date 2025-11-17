@@ -245,7 +245,31 @@ export class PortfolioCalculatorService {
       }
     }
 
-    const holdings = Array.from(holdingsMap.values());
+    let holdings = Array.from(holdingsMap.values());
+
+    // Merge all USD stablecoins (USD, USDT, USDC) into a single "USD" entry
+    const usdStablecoins = ['USD', 'USDT', 'USDC'];
+    const stablecoinHoldings = holdings.filter(h => usdStablecoins.includes(h.symbol));
+
+    if (stablecoinHoldings.length > 0) {
+      // Combine all stablecoins into one USD entry
+      const mergedStablecoin: Holding = {
+        symbol: 'USD',
+        amount: stablecoinHoldings.reduce((sum, h) => sum + h.amount, 0),
+        totalCost: stablecoinHoldings.reduce((sum, h) => sum + h.totalCost, 0),
+        avgCost: 0, // Will be calculated below
+      };
+
+      // Calculate average cost if there's a cost basis
+      if (mergedStablecoin.totalCost > 0 && mergedStablecoin.amount > 0) {
+        mergedStablecoin.avgCost = mergedStablecoin.totalCost / mergedStablecoin.amount;
+      }
+
+      // Remove individual stablecoin entries and add merged entry
+      holdings = holdings.filter(h => !usdStablecoins.includes(h.symbol));
+      holdings.push(mergedStablecoin);
+    }
+
     const prices = await this.getCurrentPrices(holdings);
 
     let totalValue = 0;
@@ -256,9 +280,9 @@ export class PortfolioCalculatorService {
     let totalCostTraded = 0;  // Only assets with cost basis
 
     for (const holding of holdings) {
-      // For USD/USDT/USDC, price is 1
+      // For USD (merged stablecoins), price is 1
       let currentPrice = prices.get(holding.symbol) || 0;
-      if (['USD', 'USDT', 'USDC'].includes(holding.symbol)) {
+      if (holding.symbol === 'USD') {
         currentPrice = 1;
       }
 

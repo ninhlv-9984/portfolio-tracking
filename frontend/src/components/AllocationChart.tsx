@@ -17,12 +17,14 @@ const COLORS = [
 ];
 
 export default function AllocationChart({ holdings }: Props) {
-  // Prepare data for pie chart
-  const chartData = holdings.map((holding) => ({
-    name: holding.symbol,
-    value: holding.weight || 0,
-    amount: holding.currentValue || 0,
-  }));
+  // Prepare data for pie chart and sort by weight descending
+  const chartData = holdings
+    .map((holding) => ({
+      name: holding.symbol,
+      value: holding.weight || 0,
+      amount: holding.currentValue || 0,
+    }))
+    .sort((a, b) => b.value - a.value); // Sort by weight descending
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

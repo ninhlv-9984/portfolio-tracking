@@ -1,5 +1,6 @@
 import type { Holding } from '../types';
 import { useState } from 'react';
+import { getCryptoLogoUrl } from '../utils/cryptoLogos';
 
 interface Props {
   holdings: Holding[];
@@ -101,7 +102,7 @@ export default function HoldingsTable({ holdings }: Props) {
         {sortedHoldings.map((holding, index) => {
           const colorScheme = CRYPTO_COLORS[index % CRYPTO_COLORS.length];
           const isProfitable = (holding.pnlPercentage || 0) >= 0;
-          const isStablecoin = ['USD', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD'].includes(holding.symbol);
+          const isStablecoin = holding.symbol === 'USD' || ['USDT', 'USDC', 'DAI', 'TUSD', 'BUSD'].includes(holding.symbol);
 
           return (
             <div
@@ -111,8 +112,12 @@ export default function HoldingsTable({ holdings }: Props) {
               <div className="flex items-center justify-between">
                 {/* Left: Icon and Name */}
                 <div className="flex items-center gap-4">
-                  <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${colorScheme.from} ${colorScheme.to} flex items-center justify-center text-white font-bold text-xl shadow-md`}>
-                    {holding.symbol.substring(0, 1)}
+                  <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-md overflow-hidden ring-2 ring-gray-100">
+                    <img
+                      src={getCryptoLogoUrl(holding.symbol)}
+                      alt={`${holding.symbol} logo`}
+                      className="w-12 h-12 object-contain"
+                    />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">{holding.symbol}</h3>
