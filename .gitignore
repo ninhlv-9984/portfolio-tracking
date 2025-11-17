@@ -15,3 +15,5 @@ npm-debug.log*
 okx-fills-*.json
 okx-fills-*.csv
 .playwright-mcp
+binance.csv
+import-binance*

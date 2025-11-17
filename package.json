@@ -10,7 +10,9 @@
     "btc-average": "node calculate-btc-average-cost.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "csv-parse": "^6.1.0",
+    "dotenv": "^16.4.5",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.5"
