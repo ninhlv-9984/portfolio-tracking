@@ -1,0 +1,74 @@
+{
+  "skill_name": "awesome-stock-trading",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Phân tích BTC cho năm 2026, kế hoạch phân bổ, rủi ro và dự phòng",
+      "expected_output": "Markdown report with all 10 sections covering Bitcoin analysis",
+      "files": [],
+      "assertions": [
+        "Output is a .md file named with pattern YYYYMMDD_*BTC*.md",
+        "Report contains all 10 required sections",
+        "Section 1 has Executive Summary with trend table (3 timeframes)",
+        "Section 2 has support/resistance table with at least 5 levels",
+        "Section 2 has technical indicators table with SMA 50, SMA 200, RSI, MACD",
+        "Section 3 has macro factors table and bull vs bear narrative table",
+        "Section 4 has at least 3 scenarios with probability percentages",
+        "Scenario probabilities sum to approximately 92-100%",
+        "Section 5 has DCA zones table with specific price ranges",
+        "Section 6 has risk matrix with at least 6 risks",
+        "Section 7 has contingency plans in code block decision tree format",
+        "Section 8 has monitoring dashboard table with at least 8 indicators",
+        "Section 9 has timeline with specific events",
+        "Section 10 has recommendation table for 3 risk profiles",
+        "Report includes disclaimer",
+        "All price data is sourced from web search (not fabricated)",
+        "Report is written in the same language as the user prompt"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Analyze AAPL stock for 2026 with allocation plan and risk management",
+      "expected_output": "Markdown report with all 10 sections covering Apple stock analysis",
+      "files": [],
+      "assertions": [
+        "Output is a .md file named with pattern YYYYMMDD_AAPL.md",
+        "Report contains all 10 required sections",
+        "Section 3 includes earnings/revenue data and P/E valuation",
+        "Section 4 scenarios reference earnings and product catalysts",
+        "Section 5 allocation considers single-stock concentration limits",
+        "Section 6 includes earnings miss risk",
+        "Report is written in English (matching user prompt language)",
+        "All price data is sourced from web search"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Phân tích Samsung (005930.KS) và kế hoạch đầu tư",
+      "expected_output": "Markdown report covering Samsung Korean stock analysis",
+      "files": [],
+      "assertions": [
+        "Output is a .md file",
+        "Report contains all 10 required sections",
+        "Section 3 references semiconductor/memory chip cycle",
+        "Section 6 includes currency risk (KRW/USD)",
+        "Section 6 includes geopolitical risk",
+        "Report is written in Vietnamese"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Quick analysis on SPY ETF - should I buy now?",
+      "expected_output": "Markdown report covering SPY ETF analysis",
+      "files": [],
+      "assertions": [
+        "Output is a .md file",
+        "Report contains all 10 required sections",
+        "Section 3 includes holdings breakdown and expense ratio",
+        "Section 5 treats SPY as core holding with appropriate allocation range",
+        "Section 6 includes tracking error as a risk factor",
+        "Report includes disclaimer about not being financial advice"
+      ]
+    }
+  ]
+}
