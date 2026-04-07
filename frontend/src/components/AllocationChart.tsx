@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Holding } from '../types';
 
 interface Props {
@@ -7,34 +7,30 @@ interface Props {
 }
 
 const COLORS = [
-  '#3B82F6', // blue
-  '#10B981', // green
-  '#F59E0B', // amber
-  '#EF4444', // red
-  '#8B5CF6', // purple
-  '#EC4899', // pink
-  '#14B8A6', // teal
-  '#F97316', // orange
+  '#00e5ff', // cyan
+  '#fbbf24', // gold
+  '#a78bfa', // purple
+  '#34d399', // emerald
+  '#f87171', // red
+  '#fb923c', // orange
+  '#60a5fa', // blue
+  '#e879f9', // pink
 ];
 
-// Asset category colors
 const GROUP_COLORS: Record<string, string> = {
-  'BTC': '#F7931A', // Bitcoin orange
-  'Cash': '#10B981', // Green for stablecoins
-  'Gold': '#FFD700', // Gold color
-  'Altcoins': '#8B5CF6', // Purple for altcoins
+  'BTC': '#F7931A',
+  'Cash': '#22c55e',
+  'Gold': '#fbbf24',
+  'Altcoins': '#a78bfa',
 };
 
 type ViewMode = 'individual' | 'grouped';
 
-// Categorize asset into groups
 function categorizeAsset(symbol: string): string {
   const upperSymbol = symbol.toUpperCase();
-
   if (upperSymbol === 'BTC') return 'BTC';
   if (['USDT', 'USDC', 'USD', 'DAI', 'BUSD', 'TUSD'].includes(upperSymbol)) return 'Cash';
   if (['PAXG', 'XAU'].includes(upperSymbol)) return 'Gold';
-
   return 'Altcoins';
 }
 
@@ -50,7 +46,6 @@ export default function AllocationChart({ holdings }: Props) {
     }).format(value);
   };
 
-  // Prepare individual asset data
   const individualData = holdings
     .map((holding) => ({
       name: holding.symbol,
@@ -59,7 +54,6 @@ export default function AllocationChart({ holdings }: Props) {
     }))
     .sort((a, b) => b.value - a.value);
 
-  // Prepare grouped data
   const groupedData = Object.entries(
     holdings.reduce((acc, holding) => {
       const group = categorizeAsset(holding.symbol);
@@ -74,24 +68,27 @@ export default function AllocationChart({ holdings }: Props) {
     .map(([name, data]) => ({ name, ...data }))
     .sort((a, b) => b.value - a.value);
 
-  // Select data based on view mode
   const chartData = viewMode === 'individual' ? individualData : groupedData;
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white px-4 py-2 shadow-lg rounded border border-gray-200">
-          <p className="font-semibold text-gray-900">{data.name}</p>
-          <p className="text-sm text-gray-600">{formatCurrency(data.amount)}</p>
-          <p className="text-sm text-gray-600">{data.value.toFixed(2)}%</p>
+        <div className="px-4 py-3 rounded-lg shadow-xl"
+          style={{
+            background: 'var(--chart-tooltip-bg)',
+            border: '1px solid var(--border-hover)',
+          }}
+        >
+          <p className="font-bold text-sm text-[var(--text-primary)]">{data.name}</p>
+          <p className="text-xs font-mono mt-1" style={{ color: 'var(--cyan)' }}>{formatCurrency(data.amount)}</p>
+          <p className="text-xs font-mono text-[var(--text-muted)]">{data.value.toFixed(2)}%</p>
         </div>
       );
     }
     return null;
   };
 
-  // Only show holdings with >0.5% weight to avoid clutter (for individual view only)
   const significantHoldings = viewMode === 'individual'
     ? chartData.filter(h => h.value >= 0.5)
     : chartData;
@@ -106,7 +103,6 @@ export default function AllocationChart({ holdings }: Props) {
     displayData.push({ name: 'Others', value: otherTotal, amount: otherAmount });
   }
 
-  // Get colors based on view mode
   const getColor = (index: number, name: string) => {
     if (viewMode === 'grouped' && GROUP_COLORS[name]) {
       return GROUP_COLORS[name];
@@ -115,33 +111,38 @@ export default function AllocationChart({ holdings }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 h-full">
+    <div className="glow-card p-6 h-full">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Portfolio Allocation</h2>
-        <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+        <h2 className="text-lg font-bold text-[var(--text-primary)]">Allocation</h2>
+        <div className="flex rounded-lg p-0.5" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
           <button
             onClick={() => setViewMode('individual')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              viewMode === 'individual'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className="px-3 py-1.5 rounded-md text-xs font-mono transition-all"
+            style={viewMode === 'individual' ? {
+              background: 'var(--cyan-dim)',
+              color: 'var(--cyan)',
+            } : {
+              color: 'var(--text-muted)',
+            }}
           >
-            Individual
+            Assets
           </button>
           <button
             onClick={() => setViewMode('grouped')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              viewMode === 'grouped'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className="px-3 py-1.5 rounded-md text-xs font-mono transition-all"
+            style={viewMode === 'grouped' ? {
+              background: 'var(--cyan-dim)',
+              color: 'var(--cyan)',
+            } : {
+              color: 'var(--text-muted)',
+            }}
           >
-            Grouped
+            Groups
           </button>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={320}>
+
+      <ResponsiveContainer width="100%" height={280}>
         <PieChart>
           <Pie
             data={displayData}
@@ -150,31 +151,44 @@ export default function AllocationChart({ holdings }: Props) {
             labelLine={false}
             label={false}
             outerRadius={110}
-            innerRadius={70}
+            innerRadius={75}
             fill="#8884d8"
             dataKey="value"
-            paddingAngle={2}
+            paddingAngle={3}
+            strokeWidth={0}
           >
             {displayData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getColor(index, entry.name)} />
+              <Cell
+                key={`cell-${index}`}
+                fill={getColor(index, entry.name)}
+                opacity={0.85}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      <div className="mt-6 space-y-2">
+
+      {/* Legend */}
+      <div className="mt-4 space-y-1.5">
         {displayData.map((item, index) => (
-          <div key={item.name} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-all hover:shadow-md cursor-pointer border border-transparent hover:border-gray-200">
-            <div className="flex items-center gap-3">
+          <div
+            key={item.name}
+            className="flex items-center justify-between px-3 py-2.5 rounded-lg transition-all cursor-pointer"
+            style={{ }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--row-hover-bg)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <div className="flex items-center gap-2.5">
               <div
-                className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: getColor(index, item.name) }}
               />
-              <span className="font-semibold text-gray-800">{item.name}</span>
+              <span className="text-sm font-semibold text-[var(--text-secondary)]">{item.name}</span>
             </div>
-            <div className="text-right">
-              <div className="text-gray-900 font-bold text-lg">{item.value.toFixed(1)}%</div>
-              <div className="text-gray-500 text-sm">{formatCurrency(item.amount)}</div>
+            <div className="text-right flex items-center gap-4">
+              <span className="text-xs font-mono text-[var(--text-muted)]">{formatCurrency(item.amount)}</span>
+              <span className="text-sm font-mono font-bold text-[var(--text-primary)] w-14 text-right">{item.value.toFixed(1)}%</span>
             </div>
           </div>
         ))}

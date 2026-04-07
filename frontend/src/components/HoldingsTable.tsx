@@ -14,7 +14,7 @@ export default function HoldingsTable({ holdings }: Props) {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const formatCurrency = (value: number | undefined) => {
-    if (value === undefined) return '-';
+    if (value === undefined) return '—';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -28,7 +28,7 @@ export default function HoldingsTable({ holdings }: Props) {
   };
 
   const formatPercentage = (value: number | undefined) => {
-    if (value === undefined) return '-';
+    if (value === undefined) return '—';
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   };
 
@@ -41,7 +41,6 @@ export default function HoldingsTable({ holdings }: Props) {
     }
   };
 
-  // Filter out holdings with value less than $1
   const filteredHoldings = holdings.filter(holding => (holding.currentValue || 0) >= 1);
 
   const sortedHoldings = [...filteredHoldings].sort((a, b) => {
@@ -76,90 +75,118 @@ export default function HoldingsTable({ holdings }: Props) {
   });
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <span className="text-gray-300">⇅</span>;
-    return <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>;
+    if (sortField !== field) return <span className="text-[var(--text-muted)] ml-1">⇅</span>;
+    return <span className="ml-1" style={{ color: 'var(--cyan)' }}>{sortDirection === 'asc' ? '↑' : '↓'}</span>;
   };
 
-  // Define colors for each crypto
-  const CRYPTO_COLORS = [
-    { from: 'from-orange-400', to: 'to-orange-600', bg: 'bg-orange-500' },
-    { from: 'from-blue-400', to: 'to-blue-600', bg: 'bg-blue-500' },
-    { from: 'from-indigo-400', to: 'to-indigo-600', bg: 'bg-indigo-500' },
-    { from: 'from-green-400', to: 'to-green-600', bg: 'bg-green-500' },
-    { from: 'from-pink-400', to: 'to-pink-600', bg: 'bg-pink-500' },
-    { from: 'from-purple-400', to: 'to-purple-600', bg: 'bg-purple-500' },
-    { from: 'from-teal-400', to: 'to-teal-600', bg: 'bg-teal-500' },
-    { from: 'from-amber-400', to: 'to-amber-600', bg: 'bg-amber-500' },
-  ];
-
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-        <h2 className="text-xl font-bold text-gray-900">Your Holdings</h2>
-        <p className="text-sm text-gray-500 mt-1">Tap to view details</p>
+    <div className="glow-card overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div>
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Holdings</h2>
+          <p className="text-xs font-mono text-[var(--text-muted)] mt-0.5 tracking-wider">{sortedHoldings.length} POSITIONS</p>
+        </div>
+        <div className="flex gap-1">
+          {(['weight', 'currentValue', 'pnlPercentage'] as SortField[]).map(field => (
+            <button
+              key={field}
+              onClick={() => handleSort(field)}
+              className="px-3 py-1.5 rounded-md text-xs font-mono transition-all"
+              style={sortField === field ? {
+                background: 'var(--cyan-dim)',
+                color: 'var(--cyan)',
+                border: '1px solid var(--cyan-dim)',
+              } : {
+                color: 'var(--text-muted)',
+                border: '1px solid transparent',
+              }}
+            >
+              {field === 'weight' ? 'WT' : field === 'currentValue' ? 'VAL' : 'P&L'}
+              <SortIcon field={field} />
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="p-4 space-y-3">
-        {sortedHoldings.map((holding, index) => {
-          const colorScheme = CRYPTO_COLORS[index % CRYPTO_COLORS.length];
+
+      {/* Holdings list */}
+      <div className="p-4 space-y-2">
+        {sortedHoldings.map((holding) => {
           const isProfitable = (holding.pnlPercentage || 0) >= 0;
           const isStablecoin = holding.symbol === 'USD' || ['USDT', 'USDC', 'DAI', 'TUSD', 'BUSD'].includes(holding.symbol);
 
           return (
             <div
               key={holding.symbol}
-              className="bg-gray-50 rounded-2xl p-4 hover:shadow-lg transition-all hover:bg-white border-2 border-transparent hover:border-gray-200 cursor-pointer"
+              className="rounded-xl p-4 border border-transparent transition-all cursor-pointer"
+              style={{
+                background: 'var(--row-bg)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--row-hover-bg)';
+                e.currentTarget.style.borderColor = 'var(--border-hover)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--row-bg)';
+                e.currentTarget.style.borderColor = 'transparent';
+              }}
             >
               <div className="flex items-center justify-between">
-                {/* Left: Icon and Name */}
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-md overflow-hidden ring-2 ring-gray-100">
+                {/* Left: Icon + Name */}
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      background: 'var(--bg-card)',
+                      boxShadow: `inset 0 0 0 1px var(--ring-color)`,
+                    }}
+                  >
                     <img
                       src={getCryptoLogoUrl(holding.symbol)}
-                      alt={`${holding.symbol} logo`}
-                      className="w-12 h-12 object-contain"
+                      alt={holding.symbol}
+                      className="w-8 h-8 object-contain"
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{holding.symbol}</h3>
-                    <p className="text-sm text-gray-500">
-                      {formatNumber(holding.amount, holding.amount < 1 ? 8 : 4)} {holding.symbol}
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] tracking-wide">{holding.symbol}</h3>
+                    <p className="text-xs font-mono text-[var(--text-muted)]">
+                      {formatNumber(holding.amount, holding.amount < 1 ? 8 : 4)}
                     </p>
                   </div>
                 </div>
 
-                {/* Right: Value and P&L */}
+                {/* Right: Value + P&L */}
                 <div className="text-right">
-                  <div className="text-lg font-bold text-gray-900">
+                  <p className="text-sm font-bold font-mono text-[var(--text-primary)]">
                     {formatCurrency(holding.currentValue)}
-                  </div>
+                  </p>
                   {!isStablecoin && (
-                    <div className={`text-sm font-semibold ${isProfitable ? 'text-green-600' : 'text-red-600'}`}>
-                      {isProfitable ? '+' : ''}{formatCurrency(holding.pnl)} ({formatPercentage(holding.pnlPercentage)})
-                    </div>
+                    <p className="text-xs font-mono font-semibold" style={{ color: isProfitable ? 'var(--green)' : 'var(--red)' }}>
+                      {formatPercentage(holding.pnlPercentage)}
+                    </p>
                   )}
                 </div>
               </div>
 
-              {/* Bottom: Additional Info */}
-              <div className="mt-4 grid grid-cols-3 gap-4 pt-3 border-t border-gray-200">
+              {/* Bottom row: details */}
+              <div className="mt-3 pt-3 grid grid-cols-3 gap-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Avg Cost</p>
-                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(holding.avgCost)}</p>
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] tracking-widest uppercase mb-0.5">Avg Cost</p>
+                  <p className="text-xs font-mono font-semibold text-[var(--text-secondary)]">{formatCurrency(holding.avgCost)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Current Price</p>
-                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(holding.currentPrice)}</p>
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] tracking-widest uppercase mb-0.5">Price</p>
+                  <p className="text-xs font-mono font-semibold text-[var(--text-secondary)]">{formatCurrency(holding.currentPrice)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Weight</p>
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] tracking-widest uppercase mb-0.5">Weight</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--bar-bg)' }}>
                       <div
-                        className={`${colorScheme.bg} h-1.5 rounded-full transition-all duration-500`}
-                        style={{width: `${Math.min((holding.weight || 0), 100)}%`}}
+                        className="h-full rounded-full bar-shimmer"
+                        style={{ width: `${Math.min((holding.weight || 0), 100)}%` }}
                       />
                     </div>
-                    <span className="text-sm font-bold text-gray-700">
+                    <span className="text-xs font-mono font-bold" style={{ color: 'var(--cyan)' }}>
                       {holding.weight?.toFixed(1)}%
                     </span>
                   </div>

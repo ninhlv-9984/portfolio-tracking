@@ -245,6 +245,16 @@ export class PortfolioCalculatorService {
       }
     }
 
+    // Remove holdings that fills say exist but OKX balance is 0.
+    // This handles assets fully sold/withdrawn where the sell fill is missing.
+    const stablecoinSet = new Set(stablecoins);
+    for (const [symbol] of holdingsMap) {
+      if (stablecoinSet.has(symbol)) continue;
+      if (!accountBalances.has(symbol) || (accountBalances.get(symbol) || 0) < 0.00000001) {
+        holdingsMap.delete(symbol);
+      }
+    }
+
     let holdings = Array.from(holdingsMap.values());
 
     // Merge all USD stablecoins (USD, USDT, USDC) into a single "USD" entry
@@ -264,6 +274,10 @@ export class PortfolioCalculatorService {
       if (mergedStablecoin.totalCost > 0 && mergedStablecoin.amount > 0) {
         mergedStablecoin.avgCost = mergedStablecoin.totalCost / mergedStablecoin.amount;
       }
+
+      // Stablecoins are cash — cost basis = face value (1:1), zero P&L
+      mergedStablecoin.totalCost = mergedStablecoin.amount;
+      mergedStablecoin.avgCost = 1;
 
       // Remove individual stablecoin entries and add merged entry
       holdings = holdings.filter(h => !usdStablecoins.includes(h.symbol));
@@ -300,6 +314,15 @@ export class PortfolioCalculatorService {
         totalCostTraded += holding.totalCost;
       }
     }
+
+    // Filter out dust holdings (value < $30)
+    holdings = holdings.filter(h => (h.currentValue || 0) >= 30);
+
+    // Recalculate totals after filtering
+    totalValue = holdings.reduce((sum, h) => sum + (h.currentValue || 0), 0);
+    totalCost = holdings.reduce((sum, h) => sum + h.totalCost, 0);
+    totalValueTraded = holdings.filter(h => h.totalCost > 0).reduce((sum, h) => sum + (h.currentValue || 0), 0);
+    totalCostTraded = holdings.filter(h => h.totalCost > 0).reduce((sum, h) => sum + h.totalCost, 0);
 
     // Calculate portfolio weights
     for (const holding of holdings) {

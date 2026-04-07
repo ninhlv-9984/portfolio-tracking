@@ -7,7 +7,9 @@
   "scripts": {
     "test": "node test-okx-api.js",
     "fetch-fills": "node fetch-all-fills.js",
-    "btc-average": "node calculate-btc-average-cost.js"
+    "btc-average": "node calculate-btc-average-cost.js",
+    "import-csv": "node import-okx-csv.js",
+    "import-binance": "node import-binance-csv.js"
   },
   "dependencies": {
     "csv-parse": "^6.1.0",
